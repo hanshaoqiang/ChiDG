@@ -38,6 +38,7 @@ module type_chidgMatrix
 
 
         !procedure   :: build                       !< Build full-matrix representation of the block-sparse matrix
+        procedure   :: P                            !< Extract coarse-scale matrix
 
         final       :: destructor
 
@@ -178,6 +179,59 @@ contains
     
     end subroutine 
     !-----------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+    !> Set all ChiDGMatrix matrix-values to zero
+    !!
+    !!  @author Nathan A. Wukie
+    !! 
+    !! 
+    !! 
+    !----------------------------------------------------------------------------------------------------------
+    function P(self,level) result(coarseMatrix)
+        class(chidgMatrix_t),   intent(in)  :: self
+        integer(ik),            intent(in)  :: level
+
+        integer(ik) :: idom, ndom, ierr
+    
+        type(chidgMatrix_t) :: coarseMatrix
+
+
+        !
+        ! Get number of domains
+        !
+        ndom = size(self%dom)
+
+
+
+        !
+        ! Allocate domain matrices
+        !
+        allocate(coarseMatrix%dom(ndom), stat=ierr)
+        if (ierr /= 0) call AllocationError
+
+
+
+        !
+        ! Call chidgMatrix%P(level) on all matrices to produce coarse matrices
+        !
+        do idom = 1,size(self%dom)
+           coarseMatrix%dom(idom) = self%dom(idom)%P(level) 
+        end do
+    
+    
+    end function
+    !-----------------------------------------------------------------------------------------------------------
+
+
+
+
 
 
 

@@ -51,6 +51,7 @@ module type_blockmatrix
 
 
         procedure :: build      !< Build full-matrix representation of the block-sparse matrix
+        procedure :: P          !< Extract coarse-scale matrix
 
         final :: destructor
     end type blockmatrix_t
@@ -642,6 +643,271 @@ contains
 
 
     end subroutine build
+    !-----------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    !>  Returns a coarsened matrix containing values up to P{level}
+    !!
+    !!  @author Nathan A. Wukie
+    !!
+    !!  @param[inout] level     Integer defining coarsening index
+    !-------------------------------------------------------------------------------
+    function P(self,level) result(coarseMatrix)
+        class(blockmatrix_t),       intent(in)   :: self
+        integer(ik),                intent(in)   :: level
+
+        type(blockmatrix_t) :: coarseMatrix
+        integer(ik)         :: nterms_coarse, nterms_full
+        integer(ik)         :: iblk, neqns, nblks, ielem, nelem, dparent, eparent
+        integer(ik)         :: ieqn_row, ieqn_col, size1d, maxdonors
+        integer(ik)         :: ierr
+
+        integer(ik) :: irow_full_start,   irow_full_end,   icol_full_start,   icol_full_end
+        integer(ik) :: irow_coarse_start, irow_coarse_end, icol_coarse_start, icol_coarse_end
+
+
+        !
+        ! Compute number of terms in coarsening
+        !
+        nterms_coarse = (level+1)**3
+
+        
+
+        !
+        ! Copy ldata
+        !
+        coarseMatrix%ldata = self%ldata
+        
+
+
+        !
+        ! Reset nterms to coarse set
+        !
+        coarseMatrix%ldata(:,2) = nterms_coarse
+
+
+
+
+        !
+        ! Allocate lblks
+        !
+        nelem = size(self%lblks,1)
+        nblks = size(self%lblks,2)
+        allocate(coarseMatrix%lblks(nelem,nblks), stat=ierr)
+        if (ierr /= 0) call AllocationError
+
+        !
+        ! Allocate chiblks
+        !
+        if (allocated(self%chiblks)) then
+            maxdonors = size(self%chiblks,2)
+            allocate(coarseMatrix%chiblks(nelem,maxdonors), stat=ierr)
+            if (ierr /= 0) call AllocationError
+        end if
+
+
+
+
+        !
+        !  Element-wise, copy necessary data for lblks
+        !
+        do ielem = 1,nelem
+            do iblk = 1,nblks
+
+
+
+                !
+                ! For allocated blocks
+                !
+                if (allocated(self%lblks(ielem,iblk)%mat)) then
+
+                    !
+                    ! Get parent domain/element data
+                    !
+                    dparent = self%lblks(ielem,iblk)%dparent()
+                    eparent = self%lblks(ielem,iblk)%eparent()
+
+                    
+                    !
+                    ! Compute size of coarse block
+                    !
+                    neqns  = coarseMatrix%ldata(ielem,1)
+                    size1d = neqns * nterms_coarse
+
+                    
+                    !
+                    ! Initialize coarse block
+                    !
+                    call coarseMatrix%lblks(ielem,iblk)%init(size1d,dparent,eparent)
+
+                    
+
+                    !
+                    ! Get full resolution
+                    !
+                    nterms_full = self%ldata(ielem,2)
+
+
+                    !
+                    ! Copy full block data to coarse block
+                    !
+                    do ieqn_col = 1,neqns
+                        do ieqn_row = 1,neqns
+
+                            !
+                            ! Get sub-matrix indices from full resolution
+                            !
+                            irow_full_start = 1 + (ieqn_row-1)*nterms_full
+                            irow_full_end   = irow_full_start + (nterms_coarse - 1)
+            
+                            icol_full_start = 1 + (ieqn_col-1)*nterms_full
+                            icol_full_end   = icol_full_start + (nterms_coarse - 1)
+
+                    
+                            !
+                            ! Get coarse-matrix indices
+                            !
+                            irow_coarse_start = 1 + (ieqn_row-1)*nterms_coarse
+                            irow_coarse_end   = irow_coarse_start + (nterms_coarse - 1)
+                            
+                            icol_coarse_start = 1 + (ieqn_col-1)*nterms_coarse
+                            icol_coarse_end   = icol_coarse_start + (nterms_coarse - 1)
+
+                            
+                            !
+                            ! Copy full-resolution submatrix block to coarse block
+                            !
+                            coarseMatrix%lblks(ielem,iblk)%mat(irow_coarse_start:irow_coarse_end,icol_coarse_start:icol_coarse_end) = &
+                                    self%lblks(ielem,iblk)%mat(irow_full_start:irow_full_end,icol_full_start:icol_full_end)
+
+
+
+                        end do ! ieqn_row
+                    end do ! ieqn_col
+
+                end if ! if(allocated)
+
+
+
+            end do ! iblk
+        end do ! ielem
+
+
+
+
+
+
+
+        !
+        !  Element-wise, copy necessary data for chiblks
+        !
+        if (allocated(self%chiblks)) then
+
+
+            do ielem = 1,nelem
+                do iblk = 1,maxdonors
+
+                    !
+                    ! For allocated blocks
+                    !
+                    if (allocated(self%chiblks(ielem,iblk)%mat)) then
+
+                        !
+                        ! Get parent domain/element data
+                        !
+                        dparent = self%chiblks(ielem,iblk)%dparent()
+                        eparent = self%chiblks(ielem,iblk)%eparent()
+
+                        
+                        !
+                        ! Compute size of coarse block
+                        !
+                        neqns  = coarseMatrix%ldata(ielem,1)
+                        size1d = neqns * nterms_coarse
+
+                        
+                        !
+                        ! Initialize coarse block
+                        !
+                        call coarseMatrix%chiblks(ielem,iblk)%init(size1d,dparent,eparent)
+
+                        
+                        !
+                        ! Get full resolution
+                        !
+                        nterms_full = self%ldata(ielem,2)
+
+
+                        !
+                        ! Copy full block data to coarse block
+                        !
+                        do ieqn_col = 1,neqns
+                            do ieqn_row = 1,neqns
+
+                                !
+                                ! Get sub-matrix indices from full resolution
+                                !
+                                irow_full_start = 1 + (ieqn_row-1)*nterms_full
+                                irow_full_end   = irow_full_start + (nterms_coarse - 1)
+                
+                                icol_full_start = 1 + (ieqn_col-1)*nterms_full
+                                icol_full_end   = icol_full_start + (nterms_coarse - 1)
+
+                        
+                                !
+                                ! Get coarse-matrix indices
+                                !
+                                irow_coarse_start = 1 + (ieqn_row-1)*nterms_coarse
+                                irow_coarse_end   = irow_coarse_start + (nterms_coarse - 1)
+                                
+                                icol_coarse_start = 1 + (ieqn_col-1)*nterms_coarse
+                                icol_coarse_end   = icol_coarse_start + (nterms_coarse - 1)
+
+                                
+                                !
+                                ! Copy full-resolution submatrix block to coarse block
+                                !
+                                coarseMatrix%chiblks(ielem,iblk)%mat(irow_coarse_start:irow_coarse_end,icol_coarse_start:icol_coarse_end) = &
+                                        self%chiblks(ielem,iblk)%mat(irow_full_start:irow_full_end,icol_full_start:icol_full_end)
+
+
+
+                            end do ! ieqn_row
+                        end do ! ieqn_col
+
+                    end if ! if(allocated)
+
+
+
+                end do ! iblk
+            end do ! ielem
+
+        end if ! allocated(chiblks)
+
+
+
+
+    end function
+    !---------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
 
 
 

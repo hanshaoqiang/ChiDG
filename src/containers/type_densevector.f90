@@ -1,5 +1,3 @@
-!> Data type for storing the dense block matrices for the linearization of each element
-!!  @author Nathan A. Wukie
 module type_densevector
 #include <messenger.h>
     use mod_kinds,      only: rk,ik
@@ -11,6 +9,15 @@ module type_densevector
 
 
 
+    !>
+    !!
+    !!
+    !!
+    !!
+    !!
+    !!
+    !!
+    !---------------------------------------------------------------------------
     type, public :: densevector_t
         ! Element Associativity
         integer(ik), private    :: parent_ = 0                  !> Associated parent element
@@ -58,6 +65,7 @@ module type_densevector
 
 !        final :: destructor
     end type densevector_t
+    !-----------------------------------------------------------------------------------------
 
 
 

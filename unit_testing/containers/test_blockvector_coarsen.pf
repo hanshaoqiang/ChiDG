@@ -1,0 +1,162 @@
+!--------------------------------------------------------------------------------
+!       Test coarsening of matrix entries from higher-order to lower-order
+!--------------------------------------------------------------------------------
+!> Test coarsening to P0
+@Test
+subroutine test_blockvector_coarsen_P0()
+    use pfunit_mod
+    use mod_kinds,          only: rk,ik
+    use mod_constants,      only: ZERO, ONE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE
+    use type_chidg,         only: chidg_t
+    use type_mesh,          only: mesh_t
+    use type_point,         only: point_t
+    use type_blockvector,   only: blockvector_t
+    use mod_testutils,      only: meshgen
+    
+    implicit none
+    type(chidg_t)               :: chidg
+    type(mesh_t)                :: mesh
+    type(point_t), allocatable  :: pts(:,:,:)    
+    type(blockvector_t)         :: bvec, coarseVector
+    integer(ik)                 :: ielem, iblk, ivar, nderiv, i, neqns, nterms_c, nterms_s, idomain
+    
+    call chidg%init('env')
+    
+
+
+    ! Initialize 3x3x3 mesh
+    neqns  = 3
+    idomain  = 1
+    nterms_c = 8
+    nterms_s = 27
+    call meshgen('3x1x1',pts)
+    call mesh%init_geom(idomain,nterms_c,pts)
+    call mesh%init_sol(neqns,nterms_s)    !> Initialize numerics
+
+
+
+
+
+    ! Call initialization on block matrix
+    call bvec%init(mesh)
+
+
+
+
+
+
+
+    ! Set some matrix values
+    bvec%lvecs(2)%vec(1:27)  = ONE
+    bvec%lvecs(2)%vec(28:54) = TWO
+    bvec%lvecs(2)%vec(55:81) = THREE
+
+
+
+
+    ! Compute coarsening
+    !
+    ! THIS IS BEING TESTED
+    !
+    coarseVector = bvec%P(0)
+
+
+
+    ! Test values
+    @assertEqual(ONE,   coarseVector%lvecs(2)%vec(1))
+    @assertEqual(TWO,   coarseVector%lvecs(2)%vec(2))
+    @assertEqual(THREE, coarseVector%lvecs(2)%vec(3))
+
+
+    
+end subroutine
+
+
+
+
+
+
+
+
+
+
+
+!> Test coarsening to P1
+@Test
+subroutine test_blockvector_coarsen_P1()
+    use pfunit_mod
+    use mod_kinds,          only: rk,ik
+    use mod_constants,      only: ZERO, ONE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE
+    use type_chidg,         only: chidg_t
+    use type_mesh,          only: mesh_t
+    use type_point,         only: point_t
+    use type_blockvector,   only: blockvector_t
+    use mod_testutils,      only: meshgen
+    
+    implicit none
+    type(chidg_t)               :: chidg
+    type(mesh_t)                :: mesh
+    type(point_t), allocatable  :: pts(:,:,:)    
+    type(blockvector_t)         :: bvec, coarseVector
+    integer(ik)                 :: ielem, iblk, ivar, nderiv, i, neqns, nterms_c, nterms_s, idomain
+    
+    call chidg%init('env')
+    
+
+
+    ! Initialize 3x3x3 mesh
+    neqns  = 3
+    idomain  = 1
+    nterms_c = 8
+    nterms_s = 27
+    call meshgen('3x1x1',pts)
+    call mesh%init_geom(idomain,nterms_c,pts)
+    call mesh%init_sol(neqns,nterms_s)    !> Initialize numerics
+
+
+
+
+
+    ! Call initialization on block matrix
+    call bvec%init(mesh)
+
+
+
+
+
+
+
+    ! Set some matrix values
+    bvec%lvecs(2)%vec(1:27)  = ONE
+    bvec%lvecs(2)%vec(28:54) = TWO
+    bvec%lvecs(2)%vec(55:81) = THREE
+
+
+
+
+
+
+    ! Compute coarsening
+    !
+    ! THIS IS BEING TESTED
+    !
+    coarseVector = bvec%P(1)
+
+
+
+    ! Test values
+    @assertEqual(ONE,   coarseVector%lvecs(2)%vec(1:8))
+    @assertEqual(TWO,   coarseVector%lvecs(2)%vec(9:16))
+    @assertEqual(THREE, coarseVector%lvecs(2)%vec(17:24))
+
+
+
+
+    
+end subroutine test_blockvector_coarsen_P1
+
+
+
+
+
+    

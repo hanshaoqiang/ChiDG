@@ -13,7 +13,8 @@ module type_fgmres
     use mod_inv,                only: inv
 
 
-    use precon_jacobi,  only: precon_jacobi_t
+    use precon_jacobi,      only: precon_jacobi_t
+    use precon_identity,    only: precon_identity_t
     implicit none
         
 
@@ -29,7 +30,10 @@ module type_fgmres
     !-------------------------------------------
     type, public, extends(matrixsolver_t) :: fgmres_t
 
-        integer(ik) :: m = 200
+        integer(ik)     :: m = 200
+
+        !type(fgmres_t), allocatable  :: multigrid   not supported by gfortran yet
+        !type(fgmres_t), pointer  :: multigrid
 
     contains
 
@@ -50,12 +54,13 @@ contains
     !!
     !!
     !--------------------------------------------------------------
-    subroutine solve(self,A,x,b,M)
+    subroutine solve(self,A,x,b,M,info)
         class(fgmres_t),            intent(inout)               :: self
         type(chidgMatrix_t),        intent(inout)               :: A
         type(chidgVector_t),        intent(inout)               :: x
         type(chidgVector_t),        intent(inout)               :: b
         class(preconditioner_t),    intent(inout), optional     :: M
+        character(len=*),           intent(inout), optional     :: info
 
 
 
@@ -75,6 +80,22 @@ contains
         logical :: equal = .false.
 
         real(rk), allocatable    :: Dref(:,:), Dp(:,:)
+
+
+
+        type(chidgMatrix_t)             :: Amg
+        type(chidgVector_t)             :: xmg, bmg
+        type(fgmres_t)                  :: multigrid
+        type(precon_identity_t)         :: M_identity
+        character(len=:), allocatable   :: info_mg
+
+
+        !
+        ! Print information
+        !
+        if (present(info)) print*, '               Matrix Solver - Info: ', info
+
+
 
 
         !
@@ -152,6 +173,54 @@ contains
         self%niter = 0
 
 
+
+
+
+        !
+        ! Coarse-scale correction Algebraic Multigrid
+        !
+        if (present(info)) then
+            if ( info == 'multigrid' ) then
+
+                !
+                ! If we are already in the multigrid solve, don't do another one. Just report.
+                !
+                print*, '                 Coarse grid correction'
+
+            end if
+
+        else
+
+            !
+            ! Fill coarse-scale data
+            !
+            Amg = A%P(0)
+            xmg = x%P(0)
+            bmg = b%P(0)
+
+            !
+            ! Compute coarse-scale correction
+            !
+            info_mg = 'multigrid'
+            call multigrid%solve(Amg,xmg,bmg,M_identity,info_mg)
+
+            !
+            ! TODO: Prolongate coarse-scale correction to full resolution correction
+            !
+            x0 = xmg%P(3)
+
+        end if
+
+
+
+
+
+
+
+
+
+
+
         res = 1._rk
         do while (res > self%tol)
 
@@ -175,16 +244,11 @@ contains
             !
             ! Compute initial residual r0, residual norm, and normalized r0
             !
-
             r0      = self%residual(A,x0,b)
-
-            
+            p(1)    = r0%norm()
             v(1)    = r0/r0%norm()
 
 
-
-
-            p(1) = r0%norm()
             !
             ! Outer GMRES Loop
             !

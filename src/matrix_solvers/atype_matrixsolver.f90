@@ -49,7 +49,8 @@ module atype_matrixsolver
 
 
     abstract interface
-        subroutine solve_interface(self,A,x,b,M)
+        !subroutine solve_interface(self,A,x,b,M)
+        subroutine solve_interface(self,A,x,b,M,info)
             use type_chidgMatrix,       only: chidgMatrix_t
             use type_chidgVector,       only: chidgVector_t
             use type_preconditioner,    only: preconditioner_t
@@ -60,6 +61,7 @@ module atype_matrixsolver
             type(chidgVector_t),        intent(inout)           :: x
             type(chidgVector_t),        intent(inout)           :: b
             class(preconditioner_t),    intent(inout), optional :: M
+            character(len=*),           intent(inout), optional :: info
         end subroutine
     end interface
 

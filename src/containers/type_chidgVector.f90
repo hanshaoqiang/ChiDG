@@ -36,6 +36,8 @@ module type_chidgVector
         !procedure, public   :: nentries
         !procedure, public   :: ndomains
 
+        procedure, public   :: P
+
         !final               :: destructor
 
     end type chidgVector_t
@@ -220,7 +222,6 @@ contains
         integer(ik) :: idom
 
 
-
         !
         ! Loop through domain vectors and compute contribution to vecotr L2-Norm
         !
@@ -231,8 +232,55 @@ contains
         end do ! idom
 
 
-
     end subroutine dump
+
+
+
+
+
+    
+
+    !>
+    !!
+    !!
+    !!
+    !!
+    !!
+    !!
+    !-----------------------------------------------------------------------------------------
+    function P(self,level) result(coarseVector)
+        class(chidgVector_t),   intent(in)  :: self
+        integer(ik),            intent(in)  :: level
+
+        integer(ik) :: idom, ndom, ierr
+
+        type(chidgVector_t) :: coarseVector
+
+
+        !
+        ! Get number of domains
+        !
+        ndom = size(self%dom)
+
+
+
+        !
+        ! Allocate domain matrices
+        !
+        allocate(coarseVector%dom(ndom), stat=ierr)
+        if (ierr /= 0) call AllocationError
+
+
+
+        !
+        ! Call chidgVector%P(level) on all vectors to produce coarse blockvector_t's
+        !
+        do idom = 1,size(self%dom)
+            coarseVector%dom(idom) = self%dom(idom)%P(level)
+        end do
+
+
+    end function
 
 
 

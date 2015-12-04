@@ -6,9 +6,11 @@ add_test_sources(containers
                 test_blockvector_build.pf
                 test_blockvector_distribute.pf
                 test_blockvector_operators_mod.pf
+                test_blockvector_coarsen.pf
                 test_blockmatrix.pf
                 test_blockmatrix_build.pf
                 test_blockmatrix_mod.pf
+                test_blockmatrix_coarsen.pf
                 test_dict.pf
                 test_operator_block_dot.pf
                 test_operator_block_mv.pf

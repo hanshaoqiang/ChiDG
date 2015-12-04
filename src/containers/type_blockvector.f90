@@ -43,6 +43,10 @@ module type_blockvector
         procedure, public   :: nentries
         procedure, public   :: dump
 
+
+        procedure, public   :: P                        !< Return a coarsened vector
+
+
         final :: destructor
     end type blockvector_t
 
@@ -423,6 +427,167 @@ contains
 
 
 
+
+    !> Return a coarsened vector
+    !!
+    !!  @author Nathan A. Wukie
+    !!
+    !!
+    !!
+    !!
+    !----------------------------------------------------------------------
+    function P(self,level) result(newVector)
+        class(blockvector_t),       intent(in)  :: self
+        integer(ik),                intent(in)  :: level
+
+        type(blockvector_t) :: newVector
+
+        integer(ik)         :: nterms_new, nterms_orig
+        integer(ik)         :: neqns, ielem, nelem, dparent, eparent
+        integer(ik)         :: irow_new_start, irow_new_end, irow_orig_start, irow_orig_end
+        integer(ik)         :: ieqn, ierr
+
+        real(rk), allocatable   :: temp(:)
+
+
+        !
+        ! Compute number of terms in coarsening
+        !
+        nterms_new = (level+1)**3
+
+
+        !
+        ! Copy ldata
+        !
+        newVector%ldata = self%ldata
+
+        
+        !
+        ! Reset nterms to coarse set
+        !
+        newVector%ldata(:,2) = nterms_new
+
+
+        !
+        ! Allocate lvecs
+        !
+        nelem = size(self%lvecs)
+        allocate(newVector%lvecs(nelem), stat=ierr)
+        if (ierr /= 0) call AllocationError
+
+
+
+
+
+        !
+        ! Element-wise, copy necessary data for lvecs
+        !
+        do ielem = 1,nelem
+
+            !
+            ! Get parent element data
+            !
+            eparent = self%lvecs(ielem)%parent()
+
+            !
+            ! Get number of equations and number of terms for coarse expansion.
+            !
+            neqns = newVector%ldata(ielem,1)
+
+
+            !
+            ! Initialize coarse vector
+            !
+            call newVector%lvecs(ielem)%init(nterms_new,neqns,eparent)
+
+
+            !
+            ! Get full resolution
+            !
+            nterms_orig = self%ldata(ielem,2)
+
+
+            !
+            ! Copy subvector data to coarse vector
+            !
+            do ieqn = 1,neqns
+
+                if ( nterms_new < nterms_orig ) then
+                    !
+                    ! Get sub-vector indices from original resolution
+                    !
+                    irow_orig_start = 1 + (ieqn-1)*nterms_orig
+                    irow_orig_end   = irow_orig_start + (nterms_new - 1)
+
+                    !
+                    ! Get new-vector indices
+                    !
+                    irow_new_start  = 1 + (ieqn-1)*nterms_new
+                    irow_new_end    = irow_new_start + (nterms_new - 1)
+
+                elseif ( nterms_new > nterms_orig ) then
+                    !
+                    ! Get sub-vector indices from original resolution
+                    !
+                    irow_orig_start = 1 + (ieqn-1)*nterms_orig
+                    irow_orig_end   = irow_orig_start + (nterms_orig - 1)
+
+                    !
+                    ! Get new-vector indices
+                    !
+                    irow_new_start  = 1 + (ieqn-1)*nterms_new
+                    irow_new_end    = irow_new_start + (nterms_orig - 1)
+
+                end if
+
+
+                !
+                ! Fill new vector
+                !
+                !if (allocated(temp)) deallocate(temp)
+
+                !allocate(temp(nterms_new))
+                !temp = 0._rk
+
+            
+                !temp(1:nterms_new) = self%lvecs(ielem)%vec(irow_orig_start:irow_orig_end)
+
+
+                
+                !
+                ! Copy full-resolution sub-vector to coarse vector location
+                !
+                newVector%lvecs(ielem)%vec(irow_new_start:irow_new_end) = &
+                     self%lvecs(ielem)%vec(irow_orig_start:irow_orig_end)
+
+                !coarseVector%lvecs(ielem)%vec(irow_coarse_start:irow_new_end) = temp
+
+            end do ! ieqn
+
+
+
+        end do ! ielem
+
+
+    end function P
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     subroutine dump(self)
         class(blockvector_t),   intent(in)  :: self
         integer(ik) :: ielem, ientry
@@ -435,6 +600,13 @@ contains
         end do
 
     end subroutine
+
+
+
+
+
+
+
 
 
 

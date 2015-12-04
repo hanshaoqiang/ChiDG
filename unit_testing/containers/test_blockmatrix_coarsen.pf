@@ -1,0 +1,250 @@
+!--------------------------------------------------------------------------------
+!       Test coarsening of matrix entries from higher-order to lower-order
+!--------------------------------------------------------------------------------
+!> Test coarsening to P0
+@Test
+subroutine test_blockmatrix_coarsen_P0()
+    use pfunit_mod
+    use mod_kinds,          only: rk,ik
+    use mod_constants,      only: ZERO, ONE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE, &
+                                  XI_MIN, XI_MAX
+    use type_chidg,         only: chidg_t
+    use type_mesh,          only: mesh_t
+    use type_point,         only: point_t
+    use type_blockmatrix,   only: blockmatrix_t
+    use mod_testutils,      only: meshgen
+    use DNAD_D
+    
+    implicit none
+    type(chidg_t)               :: chidg
+    type(mesh_t)                :: mesh
+    type(point_t), allocatable  :: pts(:,:,:)    
+    type(blockmatrix_t)         :: bmat, coarseMatrix
+    type(AD_D)                  :: integral(8)
+    integer(ik)                 :: ielem, iblk, ivar, nderiv, i, neqns, nterms_c, nterms_s, idomain
+    
+    call chidg%init('env')
+    
+
+
+    ! Initialize 3x3x3 mesh
+    neqns  = 3
+    idomain  = 1
+    nterms_c = 8
+    nterms_s = 27
+    call meshgen('3x1x1',pts)
+    call mesh%init_geom(idomain,nterms_c,pts)
+    call mesh%init_sol(neqns,nterms_s)    !> Initialize numerics
+
+
+
+
+
+    ! Call initialization on block matrix
+    call bmat%init(mesh,'full')
+
+
+
+
+
+
+
+    ! Set some matrix values
+    bmat%lblks(2,XI_MIN)%mat(1:27, 1:27)  = ONE
+    bmat%lblks(2,XI_MIN)%mat(28:54,1:27)  = TWO
+    bmat%lblks(2,XI_MIN)%mat(55:81,1:27)  = THREE
+
+    bmat%lblks(2,XI_MIN)%mat(1:27, 28:54) = FOUR
+    bmat%lblks(2,XI_MIN)%mat(28:54,28:54) = FIVE
+    bmat%lblks(2,XI_MIN)%mat(55:81,28:54) = SIX
+
+    bmat%lblks(2,XI_MIN)%mat(1:27, 55:81) = SEVEN
+    bmat%lblks(2,XI_MIN)%mat(28:54,55:81) = EIGHT
+    bmat%lblks(2,XI_MIN)%mat(55:81,55:81) = NINE
+
+
+    bmat%lblks(2,XI_MAX)%mat(1:27, 1:27)  = ONE/TWO
+    bmat%lblks(2,XI_MAX)%mat(28:54,1:27)  = TWO/TWO
+    bmat%lblks(2,XI_MAX)%mat(55:81,1:27)  = THREE/TWO
+
+    bmat%lblks(2,XI_MAX)%mat(1:27, 28:54) = FOUR/TWO
+    bmat%lblks(2,XI_MAX)%mat(28:54,28:54) = FIVE/TWO
+    bmat%lblks(2,XI_MAX)%mat(55:81,28:54) = SIX/TWO
+
+    bmat%lblks(2,XI_MAX)%mat(1:27, 55:81) = SEVEN/TWO
+    bmat%lblks(2,XI_MAX)%mat(28:54,55:81) = EIGHT/TWO
+    bmat%lblks(2,XI_MAX)%mat(55:81,55:81) = NINE/TWO
+
+
+
+    ! Compute coarsening
+    !
+    ! THIS IS BEING TESTED
+    !
+    coarseMatrix = bmat%P(0)
+
+
+
+    ! Test values
+    @assertEqual(ONE,   coarseMatrix%lblks(2,XI_MIN)%mat(1,1))
+    @assertEqual(TWO,   coarseMatrix%lblks(2,XI_MIN)%mat(2,1))
+    @assertEqual(THREE, coarseMatrix%lblks(2,XI_MIN)%mat(3,1))
+
+    @assertEqual(FOUR,  coarseMatrix%lblks(2,XI_MIN)%mat(1,2))
+    @assertEqual(FIVE,  coarseMatrix%lblks(2,XI_MIN)%mat(2,2))
+    @assertEqual(SIX,   coarseMatrix%lblks(2,XI_MIN)%mat(3,2))
+
+    @assertEqual(SEVEN, coarseMatrix%lblks(2,XI_MIN)%mat(1,3))
+    @assertEqual(EIGHT, coarseMatrix%lblks(2,XI_MIN)%mat(2,3))
+    @assertEqual(NINE,  coarseMatrix%lblks(2,XI_MIN)%mat(3,3))
+
+
+
+
+    @assertEqual(ONE/TWO,   coarseMatrix%lblks(2,XI_MAX)%mat(1,1))
+    @assertEqual(TWO/TWO,   coarseMatrix%lblks(2,XI_MAX)%mat(2,1))
+    @assertEqual(THREE/TWO, coarseMatrix%lblks(2,XI_MAX)%mat(3,1))
+
+    @assertEqual(FOUR/TWO,  coarseMatrix%lblks(2,XI_MAX)%mat(1,2))
+    @assertEqual(FIVE/TWO,  coarseMatrix%lblks(2,XI_MAX)%mat(2,2))
+    @assertEqual(SIX/TWO,   coarseMatrix%lblks(2,XI_MAX)%mat(3,2))
+
+    @assertEqual(SEVEN/TWO, coarseMatrix%lblks(2,XI_MAX)%mat(1,3))
+    @assertEqual(EIGHT/TWO, coarseMatrix%lblks(2,XI_MAX)%mat(2,3))
+    @assertEqual(NINE/TWO,  coarseMatrix%lblks(2,XI_MAX)%mat(3,3))
+
+
+    
+end subroutine
+
+
+
+
+
+
+
+
+
+
+
+!> Test coarsening to P1
+@Test
+subroutine test_blockmatrix_coarsen_P1()
+    use pfunit_mod
+    use mod_kinds,          only: rk,ik
+    use mod_constants,      only: ZERO, ONE, TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE, &
+                                  XI_MIN, XI_MAX
+    use type_chidg,         only: chidg_t
+    use type_mesh,          only: mesh_t
+    use type_point,         only: point_t
+    use type_blockmatrix,   only: blockmatrix_t
+    use mod_testutils,      only: meshgen
+    use DNAD_D
+    
+    implicit none
+    type(chidg_t)               :: chidg
+    type(mesh_t)                :: mesh
+    type(point_t), allocatable  :: pts(:,:,:)    
+    type(blockmatrix_t)         :: bmat, coarseMatrix
+    type(AD_D)                  :: integral(8)
+    integer(ik)                 :: ielem, iblk, ivar, nderiv, i, neqns, nterms_c, nterms_s, idomain
+    
+    call chidg%init('env')
+    
+
+
+    ! Initialize 3x3x3 mesh
+    neqns  = 3
+    idomain  = 1
+    nterms_c = 8
+    nterms_s = 27
+    call meshgen('3x1x1',pts)
+    call mesh%init_geom(idomain,nterms_c,pts)
+    call mesh%init_sol(neqns,nterms_s)    !> Initialize numerics
+
+
+
+
+
+    ! Call initialization on block matrix
+    call bmat%init(mesh,'full')
+
+
+
+
+
+
+
+    ! Set some matrix values
+    bmat%lblks(2,XI_MIN)%mat(1:27, 1:27)  = ONE
+    bmat%lblks(2,XI_MIN)%mat(28:54,1:27)  = TWO
+    bmat%lblks(2,XI_MIN)%mat(55:81,1:27)  = THREE
+
+    bmat%lblks(2,XI_MIN)%mat(1:27, 28:54) = FOUR
+    bmat%lblks(2,XI_MIN)%mat(28:54,28:54) = FIVE
+    bmat%lblks(2,XI_MIN)%mat(55:81,28:54) = SIX
+
+    bmat%lblks(2,XI_MIN)%mat(1:27, 55:81) = SEVEN
+    bmat%lblks(2,XI_MIN)%mat(28:54,55:81) = EIGHT
+    bmat%lblks(2,XI_MIN)%mat(55:81,55:81) = NINE
+
+
+    bmat%lblks(2,XI_MAX)%mat(1:27, 1:27)  = ONE/TWO
+    bmat%lblks(2,XI_MAX)%mat(28:54,1:27)  = TWO/TWO
+    bmat%lblks(2,XI_MAX)%mat(55:81,1:27)  = THREE/TWO
+
+    bmat%lblks(2,XI_MAX)%mat(1:27, 28:54) = FOUR/TWO
+    bmat%lblks(2,XI_MAX)%mat(28:54,28:54) = FIVE/TWO
+    bmat%lblks(2,XI_MAX)%mat(55:81,28:54) = SIX/TWO
+
+    bmat%lblks(2,XI_MAX)%mat(1:27, 55:81) = SEVEN/TWO
+    bmat%lblks(2,XI_MAX)%mat(28:54,55:81) = EIGHT/TWO
+    bmat%lblks(2,XI_MAX)%mat(55:81,55:81) = NINE/TWO
+
+
+
+    ! Compute coarsening
+    !
+    ! THIS IS BEING TESTED
+    !
+    coarseMatrix = bmat%P(1)
+
+
+
+    ! Test values
+    @assertEqual(ONE,   coarseMatrix%lblks(2,XI_MIN)%mat(1:8,1:8))
+    @assertEqual(TWO,   coarseMatrix%lblks(2,XI_MIN)%mat(9:16, 1:8))
+    @assertEqual(THREE, coarseMatrix%lblks(2,XI_MIN)%mat(17:24,1:8))
+
+    @assertEqual(FOUR,  coarseMatrix%lblks(2,XI_MIN)%mat(1:8,  9:16))
+    @assertEqual(FIVE,  coarseMatrix%lblks(2,XI_MIN)%mat(9:16, 9:16))
+    @assertEqual(SIX,   coarseMatrix%lblks(2,XI_MIN)%mat(17:24,9:16))
+
+    @assertEqual(SEVEN, coarseMatrix%lblks(2,XI_MIN)%mat(1:8,  17:24))
+    @assertEqual(EIGHT, coarseMatrix%lblks(2,XI_MIN)%mat(9:16, 17:24))
+    @assertEqual(NINE,  coarseMatrix%lblks(2,XI_MIN)%mat(17:24,17:24))
+
+
+
+
+    @assertEqual(ONE/TWO,   coarseMatrix%lblks(2,XI_MAX)%mat(1:8,   1:8))
+    @assertEqual(TWO/TWO,   coarseMatrix%lblks(2,XI_MAX)%mat(9:16,  1:8))
+    @assertEqual(THREE/TWO, coarseMatrix%lblks(2,XI_MAX)%mat(17:24, 1:8))
+
+    @assertEqual(FOUR/TWO,  coarseMatrix%lblks(2,XI_MAX)%mat(1:8,   9:16))
+    @assertEqual(FIVE/TWO,  coarseMatrix%lblks(2,XI_MAX)%mat(9:16,  9:16))
+    @assertEqual(SIX/TWO,   coarseMatrix%lblks(2,XI_MAX)%mat(17:24, 9:16))
+
+    @assertEqual(SEVEN/TWO, coarseMatrix%lblks(2,XI_MAX)%mat(1:8,   17:24))
+    @assertEqual(EIGHT/TWO, coarseMatrix%lblks(2,XI_MAX)%mat(9:16,  17:24))
+    @assertEqual(NINE/TWO,  coarseMatrix%lblks(2,XI_MAX)%mat(17:24, 17:24))
+
+
+    
+end subroutine test_blockmatrix_coarsen_P1
+
+
+
+
+
+    

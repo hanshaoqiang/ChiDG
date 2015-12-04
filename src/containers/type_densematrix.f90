@@ -50,6 +50,8 @@ module type_densematrix
         procedure :: jdim       !> return j-dimension of matrix storage
 
         !> Setters
+        procedure :: set_dparent !> assign domain parent
+        procedure :: set_eparent !> assign element parent
         procedure :: resize     !> resize matrix storage
         procedure :: reparent   !> reassign parent
 
@@ -196,6 +198,9 @@ contains
 
 
     !> set index of parent
+    !
+    !   **Deprecated**
+    !
     !------------------------------------------------------------
     subroutine reparent(self,par)
         class(densematrix_t), intent(inout)  :: self
@@ -208,7 +213,25 @@ contains
 
 
 
+    !> set domain index of parent
+    !------------------------------------------------------------
+    subroutine set_dparent(self,par)
+        class(densematrix_t), intent(inout)  :: self
+        integer(ik),          intent(in)     :: par
 
+        self%dparent_ = par
+    end subroutine
+
+
+
+    !> set element index of parent
+    !------------------------------------------------------------
+    subroutine set_eparent(self,par)
+        class(densematrix_t), intent(inout)  :: self
+        integer(ik),          intent(in)     :: par
+
+        self%eparent_ = par
+    end subroutine
 
 
 
