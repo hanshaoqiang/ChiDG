@@ -76,7 +76,7 @@ contains
 
 
             case default
-                call signal(FATAL,'gaussian_f%set: Invalid option string')
+                call chidg_signal(FATAL,'gaussian_f%set: Invalid option string')
         end select
 
 
@@ -99,8 +99,8 @@ contains
         real(rk)                                 :: calc
 
         real(rk)    :: x,   y,   z, &
-                       du, dv, u, v, w, &
-                       gam, beta, r, T, rho, p
+                       u, v, w, &
+                       gam, beta, rho, p
 
         x = pt%c1_
         y = pt%c2_

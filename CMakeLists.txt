@@ -22,8 +22,8 @@ set(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 #------------------------------------------------------------------ 
 #                    Set 'Unit-Testing' and 'Regression-Testing' options
 #------------------------------------------------------------------
-set(UNITTEST FALSE CACHE BOOL "Enable building unit-tests")
-set(REGTEST  FALSE CACHE BOOL "Enable building regression-tests")
+set(TESTING FALSE CACHE BOOL "Enable building unit/regression testing")
+#set(REGTEST  FALSE CACHE BOOL "Enable building regression-tests")
 
 
 
@@ -58,10 +58,12 @@ if (${Fortran_VENDOR} MATCHES "INTEL")
     
 elseif (${Fortran_VENDOR} MATCHES "GNU")
     #set (USER_COMPILE_FLAGS_DEBUG   "-O0 -cpp -ffree-form -ffree-line-length-none -fcheck=all -fbacktrace -fcheck=bounds -p -g")    # Note: -fcheck=all has issues with passing null pointer in tecio_interface
-    set (USER_COMPILE_FLAGS_DEBUG   "-O0 -cpp -ffree-form -ffree-line-length-none -fbacktrace -fstack-protector -fcheck=bounds -fmax-stack-var-size=1600 -p -g")    # Note: -fcheck=all has issues with passing null pointer in tecio_interface
+    #set (USER_COMPILE_FLAGS_DEBUG   "-O0 -cpp -fprofile-arcs -ftest-coverage -ffree-form -ffree-line-length-none -fbacktrace -fstack-protector -fcheck=bounds -fmax-stack-var-size=1600 -p -g")    # Note: -fcheck=all has issues with passing null pointer in tecio_interface
+    set (USER_COMPILE_FLAGS_DEBUG   "-O0 -cpp --coverage -ffree-form -ffree-line-length-none -fbacktrace -fstack-protector -fcheck=bounds -fmax-stack-var-size=1600 -p -g")    # Note: -fcheck=all has issues with passing null pointer in tecio_interface
     set (USER_COMPILE_FLAGS_RELEASE "-O3 -cpp -ffree-form -ffree-line-length-none")
     #set (USER_COMPILE_FLAGS_RELEASE "-O3 -cpp -ffree-form -ffree-line-length-none")
-    set (CMAKE_Fortran_LINK_FLAGS_DEBUG "")
+    #set (CMAKE_Fortran_LINK_FLAGS_DEBUG "-fprofile-arcs")
+    set (CMAKE_Fortran_LINK_FLAGS_DEBUG "--coverage")
     #set (CMAKE_Fortran_LINK_FLAGS_RELEASE "-flto")
     set (CMAKE_Fortran_LINK_FLAGS_RELEASE "")
     
@@ -76,7 +78,7 @@ set (CMAKE_Fortran_FLAGS_RELEASE "${CMAKE_Fortran_FLAGS_RELEASE} ${USER_COMPILE_
 
 
 
-#------------------------------------------------------------------                                                                        
+#------------------------------------------------------------------
 #                        Find HDF5
 #------------------------------------------------------------------
 # NOTE: export HDF5_ROOT path as shell environment variable such that 
@@ -84,24 +86,22 @@ set (CMAKE_Fortran_FLAGS_RELEASE "${CMAKE_Fortran_FLAGS_RELEASE} ${USER_COMPILE_
 #       folder one should find lib and include directories. The find_package
 #       module looks first for $HDF5_ROOT. Here we append the gnu or intel folder to 
 #       the environment variable based on what compiler we are using.
+
 if (${Fortran_VENDOR} MATCHES "INTEL")
-    message(STATUS "$ENV{HDF5_ROOT}")
     set(ENV{HDF5_ROOT} $ENV{HDF5_ROOT}/intel)
-    message(STATUS "$ENV{HDF5_ROOT}")
-    find_package(HDF5 REQUIRED COMPONENTS Fortran HL Fortran_HL)
-#    find_package(HDF5 REQUIRED COMPONENTS Fortran HL Fortran_HL HINTS intel)
-    include_directories(${HDF5_INCLUDE_DIRS})
 elseif (${Fortran_VENDOR} MATCHES "GNU")
-        message(STATUS "$ENV{HDF5_ROOT}")
     set(ENV{HDF5_ROOT} $ENV{HDF5_ROOT}/gnu)
-    message(STATUS "$ENV{HDF5_ROOT}")
-    find_package(HDF5 REQUIRED COMPONENTS Fortran HL Fortran_HL)
-    include_directories(${HDF5_INCLUDE_DIRS})
 endif()
+
+
+find_package(HDF5 REQUIRED COMPONENTS Fortran HL Fortran_HL)
+include_directories(${HDF5_INCLUDE_DIRS})
+
 
 if (HDF5_FOUND)
     message(STATUS "HDF5_LIBRARIES: " ${HDF5_LIBRARIES})
 endif()
+
 
 
 
@@ -145,8 +145,21 @@ include_directories(${MPI_Fortran_INCLUDE_PATH})
 #------------------------------------------------------------------
 #                        Find Tecplot
 #------------------------------------------------------------------
-# NOTE: export TEC_ROOT path as shell environment variables such that
-#       $TEC_ROOT/lib  $TEC_ROOT/include are valid.
+
+# First define TEC_ROOT path as cmake variable such that
+# ${TEC_ROOT}/lib/libtecio.a  ${TEC_ROOT}/include/tecio.f90 are valid.
+# ${TEC_ROOT} gets used by the find_package(Tecplot) module.
+
+if ( ${CMAKE_SYSTEM_NAME} MATCHES "Darwin" ) 
+    set(TEC_ROOT ${CMAKE_SOURCE_DIR}/tecio/mac)
+elseif( ${CMAKE_SYSTEM_NAME} MATCHES "Linux" )
+    set(TEC_ROOT ${CMAKE_SOURCE_DIR}/tecio/linux)
+else()
+    message(SEND_ERROR "Invalid operating system detected for TecIO")
+endif()
+
+
+
 find_package(Tecplot REQUIRED)
 include_directories(${TECPLOT_INCLUDE_DIR})
 
@@ -156,20 +169,23 @@ message(STATUS "TECPLOT_INCLUDE_DIR: " ${TECPLOT_INCLUDE_DIR})
 
 
 
-#------------------------------------------------------------------                                                                        
+#------------------------------------------------------------------ 
 #                        Add source tree and includes
 #------------------------------------------------------------------
 add_subdirectory(DNAD)                                                                        
 add_subdirectory(src)
-include_directories(src/tools)    # Need include here for macro-enhanced message handler message.h
+
+include_directories(${CMAKE_SOURCE_DIR}/src/tools)    # Need include here for macro-enhanced message handler messenger.h
 
 
 
 
 
-#------------------------------------------------------------------                                                                        
+
+
+#------------------------------------------------------------------
 #              Add core library and driver targets
-#------------------------------------------------------------------                                                                        
+#------------------------------------------------------------------
 add_library(coredg STATIC ${LIB_SRCS})
 target_link_libraries(coredg ${HDF5_LIBRARIES} ${LAPACK_LIBRARIES} ${TECPLOT_LIBRARIES} ${MPI_Fortran_LIBRARIES})
 set_target_properties(coredg PROPERTIES 
@@ -181,53 +197,55 @@ add_executable(chidg ${EXE_SRCS})
 target_link_libraries(chidg coredg ${HDF5_LIBRARIES} ${TECPLOT_LIBRARIES} ${MPI_Fortran_LIBRARIES})
 set_target_properties(chidg PROPERTIES 
                             COMPILE_FLAGS "${CMAKE_Fortran_FLAGS} ${MPI_Fortran_COMPILE_FLAGS}"
-                            LINK_FLAGS    "${CMAKE_Fortran_LINK_FLAGS} ${MPI_Fortran_LINK_FLAGS} -lstdc++ -lpthread")
+                            LINK_FLAGS    "${CMAKE_Fortran_LINK_FLAGS} ${MPI_Fortran_LINK_FLAGS} -lstdc++")
+                           # LINK_FLAGS    "${CMAKE_Fortran_LINK_FLAGS} ${MPI_Fortran_LINK_FLAGS} -lstdc++ -lpthread")
                             # need to link lstdc++ here for tecio
                             
 
-#------------------------------------------------------------------                                                                    
-#                     Unit-testing                                   
-#------------------------------------------------------------------                                                                        
-if (UNITTEST)
+#------------------------------------------------------------------
+#                            Testing
+#------------------------------------------------------------------
+if (TESTING)
     enable_testing()
     if (${Fortran_VENDOR} MATCHES "INTEL")
-        #set(PF_ROOT $ENV{PFUNIT}/intel/serial)
         set(PF_ROOT $ENV{PFUNIT}/intel/mpi)
     elseif (${Fortran_VENDOR} MATCHES "GNU")
-        #set(PF_ROOT $ENV{PFUNIT}/gnu/serial)
         set(PF_ROOT $ENV{PFUNIT}/gnu/mpi)
     endif()
-    set(PFU_LIB ${PF_ROOT}/lib)
 
+    set(PFU_LIB ${PF_ROOT}/lib)
 
 
     # Add unit tests
-    add_subdirectory(unit_testing)
+    #add_subdirectory(test/unit_testing)
+    add_subdirectory(test)
 
 
 endif()
 
 
 
-if (REGTEST)
-    if (${Forgran_VENDOR} MATCHES "INTEL")
-        #set(PF_ROOT $ENV{PFUNIT}/intel/serial)
-        set(PF_ROOT $ENV{PFUNIT}/intel/mpi)
-    elseif (${Fortran_VENDOR} MATCHES "GNU")
-        #set(PF_ROOT $ENV{PFUNIT}/gnu/serial)
-        set(PF_ROOT $ENV{PFUNIT}/gnu/mpi)
-    endif()
-    set(PFU_LIB ${PF_ROOT}/lib)
+#if (REGTEST)
+#    if (${Forgran_VENDOR} MATCHES "INTEL")
+#        set(PF_ROOT $ENV{PFUNIT}/intel/mpi)
+#    elseif (${Fortran_VENDOR} MATCHES "GNU")
+#        set(PF_ROOT $ENV{PFUNIT}/gnu/mpi)
+#    endif()
+#
+#    set(PFU_LIB ${PF_ROOT}/lib)
+#
+#
+#    # Add regression tests
+#    add_subdirectory(test/reg_testing)
+#
+#endif()
+#
 
 
-    # Add regression tests
-    add_subdirectory(reg_testing)
 
-endif()
-
-#------------------------------------------------------------------                                                                        
+#------------------------------------------------------------------
 #                    Generate documentation
-#------------------------------------------------------------------                                                                        
+#------------------------------------------------------------------
 
 
 

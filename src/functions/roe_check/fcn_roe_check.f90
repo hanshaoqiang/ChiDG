@@ -76,7 +76,7 @@ contains
 
 
             case default
-                call signal(FATAL,'gaussian_f%set: Invalid option string')
+                call chidg_signal(FATAL,'gaussian_f%set: Invalid option string')
         end select
 
 
@@ -95,12 +95,10 @@ contains
 
     elemental function calc(self,pt)
         class(roe_check_f),  intent(in)  :: self
-        type(point_t),               intent(in)  :: pt
-        real(rk)                                 :: calc
+        type(point_t),       intent(in)  :: pt
+        real(rk)                         :: calc
 
-        real(rk)    :: x,   y,   z, &
-                       du, dv, u, v, w, &
-                       gam, beta, r, T, rho, p
+        real(rk)    :: x, y, z
 
         logical :: interior 
 

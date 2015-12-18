@@ -51,7 +51,7 @@ contains
                 !
                 ! Loop through local domains
                 !
-                do idom = 1,data%ndomains
+                do idom = 1,data%ndomains()
                     associate ( mesh => data%mesh(idom), sdata => data%sdata, eqnset => data%eqnset(idom)%item, prop => data%eqnset(idom)%item%prop)
 
                     nelem = mesh%nelem
@@ -103,7 +103,7 @@ contains
                                     !
                                     ! Test ndonors > 0
                                     !
-                                    if (ndonors == 0) call signal(FATAL,'update_residual: no available donors for boundary calculation')
+                                    if (ndonors == 0) call chidg_signal(FATAL,'update_residual: no available donors for boundary calculation')
 
 
 
@@ -183,7 +183,7 @@ contains
             ! for the interior element. So, we only need to compute derivatives for the interior element (DIAG)
 
             iblk = 7    !> DIAG
-            do idom = 1,data%ndomains
+            do idom = 1,data%ndomains()
                 call data%bcset(idom)%apply(data%mesh,data%sdata,data%eqnset(idom)%item%prop,idom,iblk)
             end do
 
@@ -193,16 +193,6 @@ contains
 
 
 
-!            do irow = 1,5 
-!                print*, data%sdata%rhs%dom(1)%lvecs(41)%vec%getvar(5)
-!            end do
-!
-!            do irow = 6,10
-!                print*, data%sdata%lhs%dom(1)%lblks(1,XI_MAX)%mat(irow,1:5)
-!            end do
-!
-!            print*, data%sdata%rhs%dom(1)%lvecs(41)%getvar(5)
-!            stop
 
 
             call timer%stop()

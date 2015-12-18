@@ -1,0 +1,212 @@
+!
+! Test init_gen procedure for initializing general matrix storage
+!
+@Test
+subroutine test_densematrix_INIT_GEN() 
+    use pfunit_mod
+    use mod_kinds, only: rk,ik
+    use type_densematrix
+    
+    implicit none
+    type(densematrix_t)  :: blk
+    integer(ik)          :: idim,jdim,dparent,eparent,nentries
+    
+    !    
+    ! Test initialization procedure
+    !
+    idim   = 4
+    jdim   = 10
+    nentries = idim*jdim
+    dparent = 1
+    eparent = 55
+    
+    !
+    ! Call initialization procedure. THIS IS BEING TESTED.
+    !
+    call blk%init(idim,jdim,dparent,eparent)
+    
+    @assertEqual(idim,blk%idim())
+    @assertEqual(jdim,blk%jdim())
+    @assertEqual(nentries,blk%nentries())
+    @assertEqual(dparent,blk%dparent())
+    @assertEqual(eparent,blk%eparent())
+    
+    
+    !
+    ! Test reinitialization procedure. THIS IS BEING TESTED.
+    !
+    idim   = 6
+    jdim   = 12
+    nentries = idim*jdim
+    dparent = 1
+    eparent = 12
+    
+    call blk%init(idim,jdim,dparent,eparent)
+    
+    @assertEqual(idim,blk%idim())
+    @assertEqual(jdim,blk%jdim())
+    @assertEqual(nentries,blk%nentries())
+    @assertEqual(dparent,blk%dparent())
+    @assertEqual(eparent,blk%eparent())
+    
+end subroutine
+
+
+
+
+
+
+
+
+
+
+!
+! Test init_square procedure for initializing square matrix storage
+!
+@Test
+subroutine test_densematrix_INIT_SQUARE()
+    use pfunit_mod
+    use mod_kinds, only: rk,ik
+    use type_densematrix
+    
+    implicit none
+    type(densematrix_t)   :: blk
+    integer(ik)          :: bsize,dparent,eparent,nentries
+    
+    
+    !
+    ! Test initialization procedure
+    !
+    bsize   = 4
+    nentries = bsize*bsize
+    dparent = 1
+    eparent = 55
+    
+
+
+    !
+    ! Call initialization procedure. THIS IS BEING TESTED.
+    !
+    call blk%init(bsize,dparent,eparent)
+    
+    @assertEqual(bsize,blk%idim())
+    @assertEqual(bsize,blk%jdim())
+    @assertEqual(nentries,blk%nentries())
+    @assertEqual(dparent,blk%dparent())
+    @assertEqual(eparent,blk%eparent())
+    
+    
+
+    !
+    ! Test reinitialization procedure
+    !
+    bsize   = 12
+    nentries = bsize*bsize
+    dparent = 1
+    eparent = 22
+    
+
+    !
+    ! Call reinitialization. THIS IS BEING TESTED.
+    !
+    call blk%init(bsize,dparent,eparent)
+    
+    @assertEqual(bsize,blk%idim())
+    @assertEqual(bsize,blk%jdim())
+    @assertEqual(nentries,blk%nentries())
+    @assertEqual(dparent,blk%dparent())
+    @assertEqual(eparent,blk%eparent())
+
+end subroutine
+
+
+
+
+
+
+
+
+
+
+
+
+
+!
+! Test 'resize' procedure for resizing matrix storage
+!
+@Test
+subroutine test_densematrix_RESIZE()
+    use pfunit_mod
+    use mod_kinds, only: rk,ik
+    use type_densematrix
+    
+    implicit none
+    type(densematrix_t)   :: blk
+    integer(ik)          :: idim,jdim,dparent,eparent,nentries
+    
+    
+    ! Initialize block
+    idim   = 4
+    jdim   = 7
+    dparent = 1
+    eparent = 55
+    
+    call blk%init(idim,jdim,dparent,eparent)
+    
+    ! Test resize procedure
+    idim   = 12
+    jdim   = 33
+    nentries = idim*jdim
+    
+    call blk%resize(idim,jdim)
+    
+    @assertEqual(idim,blk%idim())
+    @assertEqual(jdim,blk%jdim())
+    @assertEqual(nentries,blk%nentries())
+    @assertEqual(dparent,blk%dparent())
+    @assertEqual(eparent,blk%eparent())
+
+end subroutine
+
+
+! Test 'reparent' procedure for assigning new parent element index
+@Test
+subroutine test_densematrix_REPARENT()
+    use pfunit_mod
+    use mod_kinds, only: rk,ik
+    use type_densematrix
+    
+    implicit none
+    type(densematrix_t)   :: blk
+    integer(ik)          :: idim,jdim,dparent,eparent,parent,nentries
+    
+    
+    ! Initialize block
+    idim   = 4
+    jdim   = 7
+    nentries = idim*jdim
+    dparent = 1
+    eparent = 55
+    
+    call blk%init(idim,jdim,dparent,eparent)
+    
+    ! Test resize procedure
+    parent = 21
+    
+    call blk%reparent(parent)
+    
+    @assertEqual(idim,blk%idim())
+    @assertEqual(jdim,blk%jdim())
+    @assertEqual(nentries,blk%nentries())
+    @assertEqual(dparent,blk%dparent())
+    @assertEqual(parent,blk%eparent())
+
+end subroutine
+
+
+
+
+
+
+
+

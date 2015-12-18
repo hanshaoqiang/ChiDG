@@ -2,12 +2,14 @@ module type_chidg
 #include <messenger.h>
     use mod_equations,          only: initialize_equations
     use mod_grid,               only: initialize_grid
-    use mod_io,                 only: read_input
+    use mod_io,                 only: read_input, nterms_s, eqnset
+    use mod_string_utilities,   only: get_file_extension
 
     use type_chidg_data,        only: chidg_data_t
     use type_timescheme,        only: timescheme_t
     use atype_matrixsolver,     only: matrixsolver_t
     use type_preconditioner,    only: preconditioner_t
+    use type_meshdata,          only: meshdata_t
     use type_dict,              only: dict_t
 
     use mod_timescheme,         only: create_timescheme
@@ -16,6 +18,8 @@ module type_chidg
     use mod_chimera,            only: detect_chimera_faces,  &
                                       detect_chimera_donors, &
                                       compute_chimera_interpolators
+
+    use mod_hdfio,              only: read_grid_hdf, read_solution_hdf, write_solution_hdf
 
     implicit none
 
@@ -42,10 +46,16 @@ module type_chidg
 
 
         procedure   :: init
+        procedure   :: close
         procedure   :: set
 
         procedure   :: run
         procedure   :: report
+
+        ! IO procedures
+        procedure   :: read_grid
+        procedure   :: read_solution
+        procedure   :: write_solution
     end type
 
 
@@ -73,10 +83,9 @@ contains
         if (.not. self%envInitialized ) then
             call initialize_equations()
             call initialize_grid()
+            call log_init()
             self%envInitialized = .true.
         end if
-
-
 
 
 
@@ -111,9 +120,9 @@ contains
             case ('finalize')
 
                 ! Test chidg necessary components have been allocated
-                if (.not. allocated(self%timescheme))     call signal(FATAL,"chidg%timescheme component was not allocated")
-                if (.not. allocated(self%matrixsolver))   call signal(FATAL,"chidg%matrixsolver component was not allocated")
-                if (.not. allocated(self%preconditioner)) call signal(FATAL,"chidg%preconditioner component was not allocated")
+                if (.not. allocated(self%timescheme))     call chidg_signal(FATAL,"chidg%timescheme component was not allocated")
+                if (.not. allocated(self%matrixsolver))   call chidg_signal(FATAL,"chidg%matrixsolver component was not allocated")
+                if (.not. allocated(self%preconditioner)) call chidg_signal(FATAL,"chidg%preconditioner component was not allocated")
 
 
                 call self%timescheme%init(self%data)
@@ -122,7 +131,7 @@ contains
 
 
             case default
-                call signal(WARN,'chidg_t: Invalid initialization string')
+                call chidg_signal(WARN,'chidg_t: Invalid initialization string')
 
         end select
 
@@ -207,7 +216,9 @@ contains
 
 
             case default
-                call signal(FATAL,"chidg%set: component string was not recognized. Check spelling and that the component was registered as an option in the chidg%set routine")
+                call chidg_signal(FATAL,"chidg%set: component string was not recognized.      &
+                                         Check spelling and that the component was registered &
+                                         as an option in the chidg%set routine")
 
 
         end select
@@ -222,23 +233,174 @@ contains
 
 
 
+    !>
+    !!
+    !!
+    !!
+    !!
+    !!
+    !----------------------------------------------------------------------------------------------
+    subroutine read_grid(self,gridfile)
+        class(chidg_t),     intent(inout)   :: self
+        character(*),       intent(in)      :: gridfile
+
+        character(len=5),   dimension(1)    :: extensions
+        character(len=:),   allocatable     :: extension
+        type(meshdata_t),   allocatable     :: meshdata(:)
+        integer                             :: iext, extloc, idom, ndomains
+
+
+
+
+        !
+        ! Get filename extension
+        !
+        extensions = ['.h5']
+        extension = get_file_extension(gridfile, extensions)
+
+
+
+
+        !
+        ! Call grid reader based on file extension
+        !
+        if ( extension == '.h5' ) then
+            call read_grid_hdf(gridfile,meshdata)
+        else
+            call chidg_signal(FATAL,"chidg%read_grid: grid file extension not recognized")
+        end if
+
+
+
+
+        !
+        ! Add domains to ChiDG%data
+        !
+        ndomains = size(meshdata)
+        do idom = 1,ndomains
+            call self%data%add_domain(                              &
+                                      trim(meshdata(idom)%name),    &
+                                      meshdata(idom)%points,        &
+                                      meshdata(idom)%nterms_c,      &
+                                      eqnset,                       &
+                                      nterms_s                      &
+                                      )
+        end do
+
+
+
+
+    end subroutine read_grid
+    !##############################################################################################
+
+
+
+
+
+    !>
+    !!
+    !!
+    !!
+    !!
+    !!
+    !----------------------------------------------------------------------------------------------
+    subroutine read_solution(self,solutionfile)
+        class(chidg_t),     intent(inout)   :: self
+        character(*),       intent(in)      :: solutionfile
+
+        character(len=5),   dimension(1)    :: extensions
+        character(len=:),   allocatable     :: extension
+        type(meshdata_t),   allocatable     :: solutiondata(:)
+        integer                             :: iext, extloc, idom, ndomains
+
+
+        !
+        ! Get filename extension
+        !
+        extensions = ['.h5']
+        extension = get_file_extension(solutionfile, extensions)
+
+
+        !
+        ! Call grid reader based on file extension
+        !
+        if ( extension == '.h5' ) then
+            call read_solution_hdf(solutionfile,self%data)
+        else
+            call chidg_signal(FATAL,"chidg%read_solution: grid file extension not recognized")
+        end if
+
+
+    end subroutine read_solution
+    !##############################################################################################
+
+
+
+
+
+
+    !>
+    !!
+    !!
+    !!
+    !!
+    !!
+    !----------------------------------------------------------------------------------------------
+    subroutine write_solution(self,solutionfile)
+        class(chidg_t),     intent(inout)   :: self
+        character(*),       intent(in)      :: solutionfile
+
+        character(len=5),   dimension(1)    :: extensions
+        character(len=:),   allocatable     :: extension
+        type(meshdata_t),   allocatable     :: solutiondata(:)
+        integer                             :: iext, extloc, idom, ndomains
+
+
+        !
+        ! Get filename extension
+        !
+        extensions = ['.h5']
+        extension = get_file_extension(solutionfile, extensions)
+
+
+        !
+        ! Call grid reader based on file extension
+        !
+        if ( extension == '.h5' ) then
+            call write_solution_hdf(solutionfile,self%data)
+        else
+            call chidg_signal(FATAL,"chidg%write_solution: grid file extension not recognized")
+        end if
+
+
+    end subroutine write_solution
+    !##############################################################################################
+
+
+
+
+
+
 
 
 
     !>  Run ChiDG simulation
     !!
-    !!      - This routine passes the domain and matrixsolver components to the
-    !!        time scheme for iteration
+    !!      - This routine passes the domain data, matrixsolver, and preconditioner
+    !!        components to the time scheme for iteration
     !!
     !!  @author Nathan A. Wukie
     !!
-    !----------------------------------------------------------------------------
+    !---------------------------------------------------------------------------------------------
     subroutine run(self)
         class(chidg_t),     intent(inout)   :: self
 
+
         call self%timescheme%solve(self%data,self%matrixsolver,self%preconditioner)
 
+
     end subroutine run
+    !##############################################################################################
 
 
 
@@ -257,7 +419,7 @@ contains
     !!
     !!
     !!
-    !----------------------------------------------------------------------------
+    !-----------------------------------------------------------------------------------------------
     subroutine report(self)
         class(chidg_t), intent(inout)   :: self
 
@@ -267,6 +429,37 @@ contains
 
 
     end subroutine report
+    !################################################################################################
+
+
+
+
+
+
+
+
+
+    !> Any activities that need performed before the program completely terminates.
+    !!
+    !!  @author Nathan A. Wukie
+    !!
+    !!
+    !!
+    !-------------------------------------------------------------------------------------------------
+    subroutine close(self)
+        class(chidg_t), intent(inout)   :: self
+
+
+        call log_finalize()
+
+
+    end subroutine
+    !##################################################################################################
+
+
+
+
+
 
 
 

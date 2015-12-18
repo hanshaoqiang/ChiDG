@@ -2,13 +2,13 @@
 
 
 
-\mainpage ChiDG - Documentation - Version 0.1
+\mainpage Overview
+
+
+\image html chidg_logo_small.png
 
 
 
-
-
-\section s_Overview Overview
 ChiDG is a Chimera-based framework for solving sets of partial differential equations using the discontinous Galerkin method.
 
 
@@ -19,7 +19,16 @@ ChiDG is a Chimera-based framework for solving sets of partial differential equa
 
 
 
-\section s_Contents Contents
+\section s_contents Contents
+
+
+\li \ref page_installation
+\li \ref page_usage
+\li \ref page_examplecases
+\li \ref page_codedetails
+\li \ref page_references
+\li \ref page_license
+
 
 
 

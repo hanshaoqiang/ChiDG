@@ -12,10 +12,11 @@ module mod_io
     !--------------------------------------------------
     character(len=100),  save    :: gridfile
     character(len=100),  save    :: gridtype
-    character(len=100),  save    :: tecplot_prefix = 'tec'
-    character(len=100),  save    :: hdf_out        = 'solution.h5'
+    character(len=100),  save    :: tecplot_prefix      = 'tec'
+    character(len=100),  save    :: hdf_out             = 'solution.h5'
 
-    character(len=100),  save    :: solutionfile
+    character(len=100),  save    :: solutionfile_in     = 'none'
+    character(len=100),  save    :: solutionfile_out    = 'none'
 
 
 
@@ -84,13 +85,6 @@ module mod_io
     
 
 
-    ! BOUNDARY CONDITIONS
-    !--------------------------------------------------
-    integer(ik),         save    :: bc_ximin(MAXBLOCKS),   bc_ximax(MAXBLOCKS)
-    integer(ik),         save    :: bc_etamin(MAXBLOCKS),  bc_etamax(MAXBLOCKS)
-    integer(ik),         save    :: bc_zetamin(MAXBLOCKS), bc_zetamax(MAXBLOCKS)
-    real(rk),            save    :: bcpar1(6), bcpar2(6), bcpar3(6), bcpar4(6)
-
 
     !==================================================================================
     !           These quantities are used globally, but computed during input.
@@ -100,7 +94,6 @@ module mod_io
     integer(ik),         save    :: nterms_s        = 1
 
 contains
-!--------------------------------------------------
 
 
 
@@ -113,7 +106,7 @@ contains
     !!
     !!  @author Nathan A. Wukie
     !!
-    !--------------------------------------------------------
+    !------------------------------------------------------------------------------------------------
     subroutine read_input()
         use mod_ordering,   only: MAX_POLY_ORDER
 
@@ -122,12 +115,12 @@ contains
         namelist /files/                    gridfile,              &
                                             gridtype,              &
                                             hdf_out,               &
-                                            tecplot_prefix
-
+                                            tecplot_prefix,        &
+                                            solutionfile_in,       &
+                                            solutionfile_out
 
         namelist /space/                    basis,                 &
                                             solution_order
-                                            
 
         namelist /quadrature/               gq_rule
 
@@ -144,20 +137,24 @@ contains
                                             mtol,                  &
                                             preconditioner
 
-!        namelist /grid/     gridfile,   gridtype,   &
-!                            bc_ximin,   bc_ximax,   &
-!                            bc_etamin,  bc_etamax,  &
-!                            bc_zetamin, bc_zetamax, &
-!                            bcpar1, bcpar2, bcpar3, bcpar4
 
         namelist /io/                       nwrite,                &
                                             output_res,            &
                                             initial_write,         &
                                             final_write
 
-        inquire(file='chidg.nml', exist=file_exists)
-        if (.not. file_exists) call signal(FATAL, "read_input: 'chidg.nml' input file was not found")
 
+        !
+        ! Check that input file exists
+        !
+        inquire(file='chidg.nml', exist=file_exists)
+        if (.not. file_exists) call chidg_signal(FATAL, "read_input: 'chidg.nml' input file was not found")
+
+
+
+        !
+        ! Read namelist input for parameter initialization
+        !
         open(unit=7,form='formatted',file="chidg.nml")
         read(7,nml=files)
         read(7,nml=space)
@@ -169,12 +166,15 @@ contains
 
 
 
+        !
         ! Compute number of terms in polynomial expansions
+        !
         nterms_sol1d = (solution_order)
         nterms_s = nterms_sol1d * nterms_sol1d * nterms_sol1d
 
 
     end subroutine read_input
+    !#######################################################################################################
 
 
 

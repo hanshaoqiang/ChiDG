@@ -103,7 +103,8 @@ contains
         !
         call self%timer%reset()
         call self%timer%start()
-        print*, '           Matrix Solver: '
+        call write_line('           Matrix Solver: ')
+!        print*, '           Matrix Solver: '
 
 
 
@@ -353,7 +354,8 @@ contains
                 ! Test exit conditions
                 !
                 res = abs(p(j+1))
-                print*, res
+                call write_line(res)
+!                print*, res
                 converged = (res < self%tol)
                 
                 if ( converged ) then
@@ -443,7 +445,8 @@ contains
         ! Report
         !
         err = self%error(A,x,b)
-        print*, '   Matrix Solver Error: ', err
+        call write_line('   Matrix Solver Error: ', err,delimiter='')
+!        print*, '   Matrix Solver Error: ', err
 
         call self%timer%stop()
         call self%timer%report('Matrix solver compute time: ')
