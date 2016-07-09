@@ -1,4 +1,4 @@
-![Alt text](/doc/figures/chidg_logo_small.png?raw=true)
+.center[[Alt text](/doc/figures/chidg_logo_small.png?raw=true)]
 
 # ChiDG
 
