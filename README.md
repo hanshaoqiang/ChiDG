@@ -1,4 +1,4 @@
-<img src="https://github.com/nwukie/ChiDG/doc/figures/chidg_logo_large.png">
+![Alt text](/doc/figures/chidg_logo_large.png?raw=true)
 
 # ChiDG
 
