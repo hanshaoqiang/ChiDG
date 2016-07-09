@@ -7,7 +7,7 @@ A Chimera-based, discontinuous Galerkin solver
 
 ## Documentation
 
-Documentation for the code can be obtained either by downloading a copy from the github page at:
+Documentation can be found on the following github page:
 
 [https://nwukie.github.io/ChiDG_site](https://nwukie.github.io/ChiDG_site "ChiDG Documentation")
 
@@ -41,7 +41,7 @@ TecIO: Visualization IO
 
 
 ## License
-ChiDG is licensed under the GNU GPLv2 or later.
+ChiDG is released under the BSD 3-clause license. See LICENSE file.
 
 
 
