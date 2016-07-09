@@ -2,6 +2,7 @@
 A Chimera-based, discontinuous Galerkin solver
 
 
+[![][license img]][license]
 
 
 
@@ -69,7 +70,8 @@ and do not necessarily reflect the views of the National Science Foundation.
 
 
 
-
+[license]:LICENSE
+[license img]:https://img.shields.io/badge/license-BSD%203--clause-blue.svg
 
 
 
