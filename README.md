@@ -1,4 +1,4 @@
-![Alt text](/doc/figures/chidg_logo_large.png?raw=true)
+![Alt text](/doc/figures/chidg_logo_small.png?raw=true)
 
 # ChiDG
 
