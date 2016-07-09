@@ -28,6 +28,13 @@ Constant pressure outlet boundary condition       |  Fully-implicit nonreflectin
 :------------------------------------------------:|:-------------------------------------------------------:
 ![](/doc/figures/aachen_turbine_reflectingbc.png) |     ![](/doc/figures/aachen_turbine_nonreflectingbc.png)
 
+
+
+
+
+
+
+
 ## Documentation
 
 Documentation can be found on the following github page:
@@ -38,16 +45,33 @@ Documentation can be found on the following github page:
 
 
 
+
+
+
+
+
+
 ## Installation
 
-ChiDG uses features of the most recent Fortran standard (F2008). Updated versions of Fortran 
-compilers are required.
-
-Successfully Tested compiler versions:  
-    gfortran 5.2
+<B> Up-to-date Fortran(F2008) compiler required. Tested with gfortran 5.3 </B>
 
 
-ChiDG uses the CMake build system.
+ChiDG uses the CMake build system. Out-of-source builds, as described here, are the only supported build method.
+- Change to the ChiDG root directory.   
+        `cd ChiDG/`
+
+- Create a new build directory.         
+        `mkdir build`
+
+- Change to the build directory.        
+        `cd build`
+
+- Execute the CMake command with options to configure the build.         
+        `cmake -DCMAKE_Fortran_COMPILER=gfortran -DCMAKE_BUILD_TYPE=Release ..`
+
+- Run make to build the ChiDG library and executable.        
+        `make`
+
 
 
 
