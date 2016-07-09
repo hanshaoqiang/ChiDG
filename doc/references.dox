@@ -2,12 +2,15 @@
 
 \page page_references References
 
-
-Wukie N. A., Orkwis P. D., and Turner M. G., "An implicit, discontinuous Galerkin Chimera solver using automatic differentiation", Presented at the 2016 AIAA SciTech Conference.
-
-
+<SMALL>
+Wukie N. A., Orkwis P. D., and Turner M. G., "An implicit, discontinuous Galerkin Chimera solver using automatic differentiation", 54th AIAA Aerospace Sciences Meeting, January, 2016, <a href="AIAA_2016_2054.pdf" target="_blank"><b>AIAA_2016_2054.pdf</b></a>\n
 
 
+Wukie N. A. and Orkwis P. D., "On fully-implicit solutions of the time-linearized Euler equations in a DG-Chimera solver", 22nd AIAA/CEAS Aeroacoustics Conference, June, 2016, <a href="AIAA_2016_2975.pdf" target="_blank"><b>AIAA_2016_2975.pdf</b></a>\n
+
+
+Wukie N. A., Orkwis P. D., and Turner M. G., "A fully-implicit, Giles-type nonreflecting boundary condition in a DG-Chimera turbomachinery solver", 46th AIAA Fluid Dynamics Conference, June, 2016, <a href="AIAA_2016_3335.pdf" target="_blank"><b>AIAA_2016_3335.pdf</b></a>\n
+</SMALL>
 
 
 

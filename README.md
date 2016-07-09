@@ -1,6 +1,6 @@
 
 <p align="center">
-    <img src=https://github.com/nwukie/ChiDG/blob/master/doc/figures/chidg_logo_small.png?raw=true />
+    <img src=/doc/figures/chidg_logo_small.png?raw=true />
 </p>
 
 # ChiDG
@@ -9,9 +9,24 @@
 
 A Chimera-based, discontinuous Galerkin solver
 
+<!-- <img src=/doc/figures/naca2412_A4p0_straight_grid.png?raw=true width="20%"/> -->
+<!-- <img src=/doc/figures/mode91_3dview.png?raw=true width="20%"/> -->
+<!-- <img src=/doc/figures/aachen_turbine_cascade_new.png?raw=true width="12%"/> -->
+
+Overset airfoil grid                              |  NACA 2412 pressure
+:------------------------------------------------:|:------------------------------------------------------:
+![](doc/figures/naca2412_A4p0_straight_grid.png)  |     ![](doc/figures/naca2412_M0p2_A4p0_cpcontour_P3.png)
 
 
 
+4th-order duct grid                               |  Acoustic duct mode radiation. 7th-order accuracy.
+:------------------------------------------------:|:------------------------------------------------------:
+![](/doc/figures/munt_duct_grid.png)              |     ![](/doc/figures/mode91_3dview.png)  
+
+
+Constant pressure outlet boundary condition       |  Fully-implicit nonreflecting outlet boundary condition
+:------------------------------------------------:|:-------------------------------------------------------:
+![](/doc/figures/aachen_turbine_reflectingbc.png) |     ![](/doc/figures/aachen_turbine_nonreflectingbc.png)
 
 ## Documentation
 
