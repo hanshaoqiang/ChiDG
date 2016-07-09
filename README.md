@@ -1,8 +1,10 @@
 # ChiDG
+
+[![][license img]][license]
+
 A Chimera-based, discontinuous Galerkin solver
 
 
-[![][license img]][license]
 
 
 
@@ -10,7 +12,7 @@ A Chimera-based, discontinuous Galerkin solver
 
 Documentation can be found on the following github page:
 
-[https://nwukie.github.io/ChiDG_site](https://nwukie.github.io/ChiDG_site "ChiDG Documentation")
+[Documentation](https://nwukie.github.io/ChiDG_site/ "ChiDG Documentation")
 
 
 
