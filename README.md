@@ -21,15 +21,13 @@ Overset airfoil grid                              |  NACA 2412 pressure
 
 4th-order duct grid                               |  Acoustic duct mode radiation. 7th-order accuracy.
 :------------------------------------------------:|:------------------------------------------------------:
-![](/doc/figures/munt_duct_grid.png)              |     ![](/doc/figures/mode91_3dview.png)  
+![](doc/figures/munt_duct_grid.png)               |     ![](doc/figures/mode91_3dview.png)  
+
 
 
 Constant pressure outlet boundary condition       |  Fully-implicit nonreflecting outlet boundary condition
 :------------------------------------------------:|:-------------------------------------------------------:
-![](/doc/figures/aachen_turbine_reflectingbc.png) |     ![](/doc/figures/aachen_turbine_nonreflectingbc.png)
-
-
-
+<img src="doc/figures/aachen_turbine_reflectingbc.png" hspace="118pt"/> |   <img src="doc/figures/aachen_turbine_nonreflectingbc.png" hspace="118pt"/>
 
 
 
@@ -39,7 +37,7 @@ Constant pressure outlet boundary condition       |  Fully-implicit nonreflectin
 
 Documentation can be found on the following github page:
 
-[Documentation](https://nwukie.github.io/ChiDG_site/ "ChiDG Documentation")
+[ChiDG Documentation](https://nwukie.github.io/ChiDG_site/ )
 
 
 
