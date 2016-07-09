@@ -1,7 +1,7 @@
 ![Alt text](/doc/figures/chidg_logo_small.png?raw=true)
 
 <p align="center">
-    <img /doc/figures/chidg_logo_small.png?raw=true />
+    <img src=https://github.com/nwukie/ChiDG/blob/master/doc/figures/chidg_logo_small.png?raw=true />
 </p>
 
 # ChiDG
