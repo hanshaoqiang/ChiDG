@@ -29,7 +29,6 @@ contains
     !!  @param[out] nnodes_vol  Number of quadrature nodes defined for a volume
     !!
     !-------------------------------------------------------------------------------------------------------
-    !subroutine compute_nnodes_gq(nterms_s,nterms_c,nnodes_face,nnodes_vol)
     subroutine compute_nnodes_gq(spacedim,nterms_s,nterms_c,nnodes_face,nnodes_vol)
         use mod_io,                     only: gq_rule
 

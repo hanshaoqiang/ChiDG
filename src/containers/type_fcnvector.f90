@@ -8,7 +8,7 @@ module type_fcnvector
 
 
 
-    !>  A vector class for storing a dynamic array of bc_t instances.
+    !>  A vector class for storing a dynamic array of function_t instances.
     !!
     !!  @author Nathan A. Wukie
     !!  @date   2/8/2016

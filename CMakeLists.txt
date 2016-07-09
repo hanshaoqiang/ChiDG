@@ -260,12 +260,13 @@ if (TESTING)
     #
     # Set pFUnit installation based on compiler vendor
     #
-    if (${Fortran_VENDOR} MATCHES "INTEL")
-        set(PF_ROOT $ENV{PFUNIT}/intel)
-    elseif (${Fortran_VENDOR} MATCHES "GNU")
-        set(PF_ROOT $ENV{PFUNIT}/gnu)
-    endif()
+    #if (${Fortran_VENDOR} MATCHES "INTEL")
+    #    set(PF_ROOT $ENV{PFUNIT}/intel)
+    #elseif (${Fortran_VENDOR} MATCHES "GNU")
+    #    set(PF_ROOT $ENV{PFUNIT}/gnu)
+    #endif()
 
+    set(PF_ROOT $ENV{PFUNIT})
 
     #
     # Set location of pFUnit libs

@@ -15,7 +15,7 @@ Development tasks:
 \section s_testing Testing with pFUnit
 ChiDG uses the Fortran unit-testing framework `pFUnit`.
 
-<a href="pfunit.sourceforge.net">pFUnit Website</a>
+<a href="http://www.pfunit.sourceforge.net">pFUnit Website</a>
 
 
 \n

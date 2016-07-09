@@ -174,6 +174,10 @@ contains
 
         integer(ik)             :: ndomains, ierr
         integer, dimension(1)   :: buf
+        integer                 :: majnum, minnum, relnum
+
+
+
 
         !
         !  Get number of domains from attribute 'ndomains' in file root

@@ -4,14 +4,6 @@
 
 
 
-\section s_setup Set-up
-`chidg` reads a namelist file for input parameters.
-
-
-\n
-\n
-<HR>
-
 \section s_commandline_action ChiDG Actions
 
 \subsection s_commandline_action_convert chidg convert
@@ -76,11 +68,11 @@ action can be used as
 Running  `chidg` requires three things:
     1. The `chidg` executable
     2. A ChiDG-format grid file
-    3. A chidg.nml namelist file
+    3. A `chidg.nml` namelist file
 
 See \subpage page_installation for direction on building the `chidg` executable.\n
-See \subpage page_gridgeneration for direction on creating ChiDG-format grid files.\n
-See 'ChiDG namelist format' for direction on a proper ChiDG namelist format.\n
+See \subpage s_gridgeneration for direction on creating ChiDG-format grid files.\n
+See \subpage s_namelist for direction on a proper ChiDG namelist format.\n
 
 
 In a directory with the ChiDG-format grid file and a valid chidg.nml namelist input file,

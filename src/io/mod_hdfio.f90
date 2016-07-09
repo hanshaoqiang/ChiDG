@@ -8,13 +8,11 @@ module mod_hdfio
     use mod_bc,             only: create_bc
     use type_chidg_data,    only: chidg_data_t
     use mod_hdf_utilities,  only: get_ndomains_hdf, get_domain_names_hdf, get_eqnset_hdf
+    use mod_io,             only: nterms_s
+
     use hdf5
     use h5lt
-    use mod_io, only: nterms_s
     
-
-
-
     implicit none
 
 
@@ -45,10 +43,9 @@ contains
         integer(HID_T)   :: fid, gid, sid, did_x, did_y, did_z      ! Identifiers
         integer(HSIZE_T) :: dims(3), maxdims(3)                     ! Dataspace dimensions
 
-        type(c_ptr)                                     :: pts
-        !real(rk), dimension(:,:,:), allocatable, target :: xpts, ypts, zpts
-        real(rdouble), dimension(:,:,:), allocatable, target :: xpts, ypts, zpts
-        type(c_ptr)                                     :: cp_pts
+        type(c_ptr)                                             :: pts
+        real(rdouble), dimension(:,:,:), allocatable, target    :: xpts, ypts, zpts
+        type(c_ptr)                                             :: cp_pts
 
         character(len=1024),    allocatable     :: dnames(:), eqnset(:)
         character(1024)                         :: gname
@@ -241,9 +238,7 @@ contains
 
                 ! Deallocate points for the current domain
                 deallocate(zpts,ypts,xpts)
-!                idom = idom + 1
 
-            !end if
 
         end do  ! igrp
 
@@ -304,22 +299,20 @@ contains
         integer(HSIZE_T) :: maxdims(3)              ! Dataspace dimensions
         integer(HSIZE_T) :: dims(3)
 
-        integer, dimension(1)           :: ibuf
+        integer, dimension(1)               :: ibuf
 
-        character(100)                  :: cbuf
-        character(100)                  :: var_gqp
+        character(100)                      :: cbuf
+        character(100)                      :: var_gqp
 
-        !real(rk), allocatable, target   :: var(:,:,:)
-        !real(rk), allocatable           :: bufferterms(:)
-        real(rdouble), allocatable, target   :: var(:,:,:)
-        real(rdouble), allocatable           :: bufferterms(:)
-        type(c_ptr)                     :: cp_var
+        real(rdouble), allocatable, target  :: var(:,:,:)
+        real(rdouble), allocatable          :: bufferterms(:)
+        type(c_ptr)                         :: cp_var
 
-        integer(ik)                     :: spacedim
-        integer                         :: type,    ierr,       igrp,               &
-                                           npts,    nterms_1d,  nterms_s,   order,  &
-                                           ivar,    ielem,      nterms_ielem,   idom
-        logical                         :: ElementsEqual
+        integer(ik)                         :: spacedim
+        integer                             :: type,    ierr,       igrp,               &
+                                               npts,    nterms_1d,  nterms_s,   order,  &
+                                               ivar,    ielem,      nterms_ielem,   idom
+        logical                             :: ElementsEqual
 
 
 
@@ -495,21 +488,20 @@ contains
         integer(HSIZE_T) :: dimsc(3)                        ! Chunk size for extendible data sets
         type(H5O_INFO_T) :: info                            ! Object info type
 
-        integer                         :: ndims
-        integer, dimension(1)           :: ibuf
-        character(100)                  :: cbuf
-        character(100)                  :: var_grp
-        character(100)                  :: ctime
+        integer                             :: ndims
+        integer, dimension(1)               :: ibuf
+        character(100)                      :: cbuf
+        character(100)                      :: var_grp
+        character(100)                      :: ctime
 
-        !real(rk), allocatable, target   :: var(:,:,:)
-        real(rdouble), allocatable, target   :: var(:,:,:)
-        type(c_ptr)                     :: cp_var
+        real(rdouble), allocatable, target  :: var(:,:,:)
+        type(c_ptr)                         :: cp_var
 
-        integer(ik)                     :: nmembers,    type,   ierr,       ndomains,   igrp,   &
-                                           npts,        nterms_1d,  nterms_s,   order,  &
-                                           ivar,        ielem,      idom
-        logical                         :: FileExists, VariablesExists, DataExists, ElementsEqual
-        logical                         :: exists
+        integer(ik)                         :: nmembers,    type,   ierr,       ndomains,   igrp,   &
+                                               npts,        nterms_1d,  nterms_s,   order,  &
+                                               ivar,        ielem,      idom
+        logical                             :: FileExists, VariablesExists, DataExists, ElementsEqual
+        logical                             :: exists
 
 
 
@@ -719,7 +711,6 @@ contains
         !
         ! Open input file using default properties.
         !
-        !call h5fopen_f(filename, H5F_ACC_RDWR_F, fid, ierr)
         call h5fopen_f(filename, H5F_ACC_RDONLY_F, fid, ierr)
         if (ierr /= 0) call chidg_signal(FATAL,"read_solution_hdf5 - h5fopen_f")
 
@@ -961,7 +952,6 @@ contains
         class(bc_t),            allocatable     :: bc
         character(len=1024)                     :: bcname, pname, oname, fname
         real(rk)                                :: ovalue
-        !real(rk),   dimension(1)                :: rbuf
         real(rdouble),   dimension(1)           :: rbuf
         character(len=10)                       :: faces(NFACES)
         character(1024)                         :: gname
@@ -1151,10 +1141,8 @@ contains
                                 ! Get option value from file
                                 !
                                 adim = 1
-                                !call h5ltget_attribute_double_f(bcprop, ".", trim(oname), rbuf, ierr)
                                 call h5ltget_attribute_double_f(bcprop, ".", trim(oname), rbuf, ierr)
                                 if (ierr /= 0) call chidg_signal(FATAL,"read_boundaryconditions: error getting option value")
-                                !ovalue = rbuf(1)
                                 ovalue = real(rbuf(1),rk)
 
 

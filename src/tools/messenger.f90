@@ -264,8 +264,8 @@ contains
         !
         select case (sig)
             case (3)    ! Fatal Error -- Code terminates
-                !stop
-                error stop
+                stop
+                !error stop
 
             case default
 

@@ -18,10 +18,6 @@ module mod_io
     ! FILES
     !--------------------------------------------------
     character(len=100),  save    :: gridfile
-    character(len=100),  save    :: gridtype
-!    character(len=100),  save    :: tecplot_prefix   = 'tec'
-!    character(len=100),  save    :: hdf_out          = 'solution.h5'
-
     character(len=100),  save    :: solutionfile_in  = 'none'
     character(len=100),  save    :: solutionfile_out = 'none'
 
@@ -78,7 +74,6 @@ module mod_io
     integer(ik),         save    :: nwrite           = 100
     logical,             save    :: initial_write    = .true.
     logical,             save    :: final_write      = .true.
-!    integer(ik),         save    :: output_res       = 10
      
     
 
@@ -112,9 +107,6 @@ contains
         logical :: file_exists
 
         namelist /files/                    gridfile,              &
-                                            gridtype,              &
-!                                            hdf_out,               &
-!                                            tecplot_prefix,        &
                                             solutionfile_in,       &
                                             solutionfile_out
 
@@ -143,7 +135,6 @@ contains
 
 
         namelist /io/                       nwrite,                &
-!                                            output_res,            &
                                             initial_write,         &
                                             final_write
 

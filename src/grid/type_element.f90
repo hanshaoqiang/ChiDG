@@ -16,6 +16,7 @@ module type_element
     implicit none
 
 
+    integer :: hi, bye
 
 
     !>  Element data type
@@ -820,8 +821,8 @@ contains
         integer(ik)     :: iterm, ielem, spacedim
 
 
-        if (cart_dir > 3) call chidg_signal(FATAL,"Error: mesh_point -- card_dir exceeded 3 physical coordinates")
-        if (comp_dir > 3) call chidg_signal(FATAL,"Error: mesh_point -- comp_dir exceeded 3 physical coordinates")
+        if (cart_dir > 3) call chidg_signal(FATAL,"Error: metric_point -- card_dir exceeded 3 physical coordinates")
+        if (comp_dir > 3) call chidg_signal(FATAL,"Error: metric_point -- comp_dir exceeded 3 physical coordinates")
 
         call node%set(xi,eta,zeta)
 

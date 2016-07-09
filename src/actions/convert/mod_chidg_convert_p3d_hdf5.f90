@@ -1,5 +1,5 @@
 !>  Utility to convert a plot3d grid to an hdf5 file
-!!  which is read by the FlexDG code
+!!  which is read by the ChiDG code
 !!
 !!  @author Nathan A. Wukie
 !!  @date   4/11/2016

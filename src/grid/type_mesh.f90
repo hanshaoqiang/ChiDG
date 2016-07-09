@@ -96,8 +96,6 @@ contains
         integer(ik),    intent(in)              :: spacedim
         integer(ik),    intent(in)              :: nterms_c
         type(point_t),  intent(in)              :: points_g(:,:,:)
-        type(element_t), pointer                :: temp(:)
-
 
         !
         ! Store number of terms in coordinate expansion and domain index

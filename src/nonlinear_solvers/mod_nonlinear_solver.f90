@@ -49,7 +49,7 @@ contains
             case ('newton','Newton')
                 allocate(instance, source=NEWTON)
 
-            case ('quasi_newton','Quasi_Newton')
+            case ('quasi_newton','Quasi_Newton','quasi-newton','Quasi-Newton')
                 allocate(instance, source=QUASI_NEWTON)
 
             case default

@@ -28,6 +28,9 @@ program driver
     use mod_io
 
 
+    use type_vector
+    use type_point, only: point_t
+
 
     
     !
@@ -40,7 +43,6 @@ program driver
 
     integer(ik)                         :: narg
     character(len=1024)                 :: chidg_action, filename, file_a, file_b
-
 
 
 

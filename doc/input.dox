@@ -1,12 +1,26 @@
 /*!
 
-\page page_gridgeneration Generating a grid
+\page page_input Input files
+
+
+\section s_namelist Namelist Input
+`chidg` reads a namelist file(chidg.nml) for input parameters. A template Namelist file with all the input parameters
+is included here:
+
+<a href="chidg.nml" target="_blank"><b>chidg.nml</b></a>\n
+
+
+\n
+\n
+
+
+\n
+\n
+\section s_gridgeneration Generating a grid
 ChiDG currently has a capability to convert a Plot3D-format grid into a ChiDG-format grid.
 
 
-\n
-\n
-\section s_gridgeneration_plot3d Plot3D conversion
+\subsection s_gridgeneration_plot3d Plot3D conversion
 To create a ChiDG-format grid, one could use the following process:
     1. Create a Plot3D-formatted grid file(block-structured, 3D, unformatted, double-precision).
     2. Convert the Plot3D grid file to a ChiDG grid file using the <B>`chidg convert`</B> action.
