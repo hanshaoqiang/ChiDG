@@ -105,10 +105,7 @@ from the Tecplot website.
 
 \section s_compile Compiling ChiDG
 
-NOTE: ChiDG uses features of the most recent Fortran standard (F2008). Up-to-date Fortran compilers are \b required.
-
-Successfully tested compiler versions:
-        - gfortran 5.2
+<B> Up-to-date Fortran(F2008) compiler required. Tested with gfortran 5.3 </B>
 
 
 ChiDG uses the CMake build system. Out-of-source builds, as described here, are the only supported build method.
