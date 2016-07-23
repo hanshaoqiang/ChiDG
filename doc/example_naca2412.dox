@@ -4,7 +4,44 @@
 
 
 
-\image html naca2412_example.png
+
+
+
+<HR>
+<HR>
+
+\section s_naca2412_setup Set-up
+
+Two configurations(0.0 and 4.0 degree angle of attack) were run for the NACA 2412 airfoil.
+
+<B> Grid files: </B>
+
+Grid files for both configurations are included here. If access to the grid generation software Pointwise(.pw) is available, the
+Pointwise configuration files used to create the grids are included here. Additionally, the Plot3D-format(.x) grids output from
+Pointwise for both configurations are also included. These may be converted to the ChiDG-format HDF5 file using the 
+`chidg convert` action.
+
+<a href="naca2412_farfield_A0p0_straight.x" target="_blank"><b>naca2412_farfield_A0p0_straight.x</b></a>\n
+
+<a href="naca2412_farfield_A0p0_straight.pw" target="_blank"><b>naca2412_farfield_A0p0_straight.pw</b></a>\n
+
+<a href="naca2412_farfield_A4p0_straight.x" target="_blank"><b>naca2412_farfield_A4p0_straight.x</b></a>\n
+
+<a href="naca2412_farfield_A4p0_straight.pw" target="_blank"><b>naca2412_farfield_A4p0_straight.pw</b></a>\n
+
+
+See \subpage page_usage
+
+
+
+
+
+<HR>
+<HR>
+
+\section s_naca2412_results Results
+
+<img src="naca2412_example.png" width="50%"/>
 
 
 

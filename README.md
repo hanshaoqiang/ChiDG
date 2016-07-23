@@ -9,9 +9,6 @@
 
 A Chimera-based, discontinuous Galerkin solver
 
-<!-- <img src=/doc/figures/naca2412_A4p0_straight_grid.png?raw=true width="20%"/> -->
-<!-- <img src=/doc/figures/mode91_3dview.png?raw=true width="20%"/> -->
-<!-- <img src=/doc/figures/aachen_turbine_cascade_new.png?raw=true width="12%"/> -->
 
 Overset airfoil grid                              |  NACA 2412 pressure
 :------------------------------------------------:|:------------------------------------------------------:
