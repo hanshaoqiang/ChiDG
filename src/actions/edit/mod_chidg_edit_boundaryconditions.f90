@@ -3,7 +3,7 @@ module mod_chidg_edit_boundaryconditions
     use mod_kinds,      only: rk, ik, rdouble
     use mod_constants,  only: NFACES, XI_MIN, XI_MAX, ETA_MIN, ETA_MAX, ZETA_MIN, ZETA_MAX
     use type_bc,        only: bc_t
-    use mod_bc,         only: create_bc, list_bcs
+    use mod_bc,         only: create_bc, list_bcs, registered_bcs
     use type_function,  only: function_t
     use mod_function,   only: create_function
     use hdf5
@@ -396,12 +396,12 @@ contains
 
         integer(HID_T)                      :: bcface
         character(len=10)                   :: faces(NFACES)
-        integer(ik)                         :: ierr, int_action
+        integer(ik)                         :: ierr, int_action, bcindex
         character(len=1024),    allocatable :: bcnames(:)
         character(len=1024)                 :: dname
         character(len=:),       allocatable :: command, dname_trim
         character(len=1024)                 :: bc_string, pname
-        logical                             :: run_edit_bc_face, get_property, property_exists, set_bc, print_bcs
+        logical                             :: run_edit_bc_face, get_property, property_exists, set_bc, print_bcs, valid_bc, edit_selected_property
 
 
         faces = ["  XI_MIN","  XI_MAX"," ETA_MIN"," ETA_MAX","ZETA_MIN","ZETA_MAX"]
@@ -480,6 +480,7 @@ contains
                 case (1)
                     set_bc    = .true.
                     print_bcs = .false.
+                    valid_bc  = .true.
                     do while (set_bc)
                         !
                         ! Refresh display
@@ -490,10 +491,8 @@ contains
                         dname_trim = trim(adjustl(dname)) 
                         call print_boundaryconditions_domain_face(dname_trim(3:), trim(adjustl(faces(iface))))
 
-                        if (print_bcs) then
-                            call list_bcs()
-                        end if
-
+                        if (print_bcs) call list_bcs()
+                        if (.not. valid_bc) call write_line("Boundary condition string", bc_string, " was not found in the list of registered boundary conditions.", color='blue')
 
 
                         !
@@ -506,17 +505,25 @@ contains
 
 
                         if ( trim(bc_string) == '?' ) then
-                            
                             print_bcs = .true.
 
                         else
+
+
+                            !
+                            ! Check if boundary condition name is valid
+                            !
+                            bcindex = registered_bcs%index_by_name(trim(bc_string))
+                            valid_bc = (bcindex /= 0) .or. (trim(bc_string) == 'empty')
                         
                             !
                             ! Call routine to set boundary condition in hdf file.
                             !
-                            call set_boundarycondition_face(bcgroup,bcface,bc_string)
+                            if (valid_bc) then
+                                call set_boundarycondition_face(bcgroup,bcface,bc_string)
+                                set_bc = .false.
+                            end if
 
-                            set_bc = .false.
                         end if
 
                     end do ! set_bc
@@ -529,13 +536,14 @@ contains
                 case (2)
 
                     get_property = .true.
+                    edit_selected_property = .false.
                     do while ( get_property )
                         !
                         ! Refresh display
                         !
                         call execute_command_line("clear")
                         call print_overview(fid,idom_hdf)
-                        call print_boundaryconditions_overview(fid,idom_hdf)
+                        call print_boundaryconditions_overview(fid,idom_hdf,iface)
                         dname_trim = trim(adjustl(dname)) 
                         call print_boundaryconditions_domain_face(dname_trim(3:), trim(adjustl(faces(iface))))
                         call print_boundarycondition_properties(bcface)
@@ -543,9 +551,9 @@ contains
                         !
                         ! Call edit option
                         !
-                        command = "Enter boundary condition property: "
+                        command = "Enter boundary condition property: (Return to escape)"
                         call write_line(command,color='blue')
-                        read(*,*) pname
+                        read(*,'(A1024)') pname
 
                         !
                         ! Check property exists
@@ -553,12 +561,18 @@ contains
                         property_exists = check_property_exists(bcface,pname)
 
                         if ( property_exists ) get_property = .false.
+                        if ( property_exists ) edit_selected_property = .true.
+                        if ( len_trim(pname) == 0) get_property = .false.
+                        if ( len_trim(pname) == 0) edit_selected_property = .false.
+
+                        
+                        if (edit_selected_property) call edit_property(bcface,pname)
 
                     end do 
 
 
 
-                    call edit_property(bcface,pname)
+                    !call edit_property(bcface,pname)
 
 
 
@@ -1129,7 +1143,7 @@ contains
             if ( trim(option_keys(iattr)) == 'function' ) then
 
             else
-                call write_line(option_keys(iattr), option_vals(iattr), columns=.true., column_width = 15)
+                call write_line(option_keys(iattr), option_vals(iattr), columns=.true., column_width = 25)
             end if
         end do
 
@@ -1162,7 +1176,7 @@ contains
         integer(HSIZE_T)                :: adim
         character(len=:),   allocatable :: command
         character(len=1024)             :: option, new_function
-        logical                         :: option_exists, run
+        logical                         :: option_exists, run, empty_option
         real(rk)                        :: val
         integer                         :: ierr
 
@@ -1185,58 +1199,71 @@ contains
             !
             command = "Enter 'function' or option name: "
             call write_line(command, color='blue')
-            read(*,*) option
+            read(*,'(A1024)') option
 
+
+            if ( len_trim(option) == 0 ) then
+                empty_option = .true.
+                run = .false.
+            else
+                empty_option = .false.
+            end if
 
             !
             ! Check option exists
             !
-            call h5aexists_f(bcprop, trim(option), option_exists, ierr)
-            if (ierr /= 0) call chidg_signal(FATAL,"edit_property: error opening option attribute")
+            if ( .not. empty_option ) then
+                call h5aexists_f(bcprop, trim(option), option_exists, ierr)
+                if (ierr /= 0) call chidg_signal(FATAL,"edit_property: error opening option attribute")
 
 
-            !
-            ! Handle option_exists
-            !
-            if ( option_exists ) then
+                !
+                ! Handle option_exists
+                !
+                if ( option_exists ) then
 
 
-                if ( trim(option) == "function" ) then
+                    if ( trim(option) == "function" ) then
+
+                        !
+                        ! Set function
+                        !
+                        command = "Set function: "
+                        call write_line(command, color='blue')
+                        read(*,'(A1024)') new_function
+
+                        if (len_trim(new_function) /= 0) call set_function(bcprop, trim(new_function))
+
+
+                    else
+
+                        command = "Set option value: "
+                        call write_line(command, color='blue')
+                        read(*,*) val
+
+                        !
+                        ! Set option
+                        !
+                        adim = 1
+                        call h5ltset_attribute_double_f(bcface, "BCP_"//trim(pname), trim(option), [real(val,rdouble)], adim, ierr)
+                        if (ierr /= 0) call chidg_signal(FATAL,"edit_property: error setting option value")
+
+                    end if
 
                     !
-                    ! Set function
+                    ! Close routine
                     !
-                    command = "Set function: "
-                    call write_line(command, color='blue')
-                    read(*,*) new_function
-
-                    call set_function(bcprop, trim(new_function))
-
-
+                    run = .false.
                 else
 
-                    command = "Set option value: "
-                    call write_line(command, color='blue')
-                    read(*,*) val
-
-                    !
-                    ! Set option
-                    !
-                    adim = 1
-                    call h5ltset_attribute_double_f(bcface, "BCP_"//trim(pname), trim(option), [real(val,rdouble)], adim, ierr)
-                    if (ierr /= 0) call chidg_signal(FATAL,"edit_property: error setting option value")
+                    if (len_trim(option) /= 0) then
+                        run = .false.
+                    else
+                        call write_line("Invalid option", color='blue')
+                    end if
 
                 end if
-
-                !
-                ! Close routine
-                !
-                run = .false.
-            else
-
-                call write_line("Invalid option", color='blue')
-
-            end if
+            end if 
 
 
         end do ! run

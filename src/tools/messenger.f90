@@ -384,7 +384,7 @@ contains
 
 
 
-    !> Adds data to the module-global 'line' character string
+    !>  Adds data to the module-global 'line' character string
     !!
     !!  @author Nathan A. Wukie
     !!  @date   2/2/2016
@@ -463,7 +463,7 @@ contains
                 temp = write_internal
 
             type is(real)
-                if (linedata > 0.1) then
+                if (abs(linedata) > 0.1) then
                     write(write_internal, '(F24.14)') linedata
                 else
                     write(write_internal, '(E24.14)') linedata
@@ -471,7 +471,7 @@ contains
                 temp = write_internal
 
             type is(real(8))
-                if (linedata > 0.1) then
+                if (abs(linedata) > 0.1) then
                     write(write_internal, '(F24.14)') linedata
                 else
                     write(write_internal, '(E24.14)') linedata
