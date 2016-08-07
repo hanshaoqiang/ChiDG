@@ -20,6 +20,11 @@ find_library (TECPLOT_LIBRARIES
         HINTS ${TEC_ROOT}
         PATH_SUFFIXES lib
         NO_DEFAULT_PATH)
+#find_library (TECPLOT_LIBRARIES
+#        NAMES libtecio.a libtecio
+#        HINTS ${TEC_ROOT}
+#        PATH_SUFFIXES lib
+#        NO_DEFAULT_PATH)
 
 
 # SHOULD PROBABLY REDO THIS

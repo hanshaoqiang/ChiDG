@@ -7,8 +7,9 @@ cmake_minimum_required(VERSION 3.4)
 #-----------------------------------------------------------------------------------
 #                       CMake macros for adding source files
 #-----------------------------------------------------------------------------------
-include(cmake/macros/add_exe_sources.txt)
 include(cmake/macros/add_lib_sources.txt)
+include(cmake/macros/add_exe_sources.txt)
+include(cmake/macros/add_python_sources.txt)
 include(cmake/macros/add_test_target.txt)
 include(cmake/macros/add_test_sources.txt)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")
@@ -64,7 +65,7 @@ elseif (${Fortran_VENDOR} MATCHES "GNU")
     # Note: -fcheck=all has issues with passing null pointer in tecio_interface
     set (USER_COMPILE_FLAGS_DEBUG   "-O0 -cpp --coverage -ffree-form -ffree-line-length-none -fbacktrace -fstack-protector -fcheck=bounds -fmax-stack-var-size=1600 -p -g -Wall")    # Note: -fcheck=all has issues with passing null pointer in tecio_interface
     #set (USER_COMPILE_FLAGS_RELEASE "-O3 -cpp -ffree-form -ffree-line-length-none -fexternal-blas -march=native -funroll-loops -m64")
-    set (USER_COMPILE_FLAGS_RELEASE "-O3 -cpp -ffree-form -ffree-line-length-none -fexternal-blas -march=native -funroll-loops -m64")
+    set (USER_COMPILE_FLAGS_RELEASE "-O3 -cpp -fPIC -ffree-form -ffree-line-length-none -fexternal-blas -march=native -funroll-loops -m64 -g")
 
     set (CMAKE_Fortran_LINK_FLAGS_DEBUG "-O0 --coverage")
     set (CMAKE_Fortran_LINK_FLAGS_RELEASE "-O3")
@@ -94,23 +95,37 @@ endif()
 #       $HDF5_ROOT contains the bin, lib, include directories for HDF5.
 #       The find_package module looks first for $HDF5_ROOT.
 
-#if (${Fortran_VENDOR} MATCHES "INTEL")
-#    set(ENV{HDF5_ROOT} $ENV{HDF5_ROOT}/intel)
-#elseif (${Fortran_VENDOR} MATCHES "GNU")
-#    set(ENV{HDF5_ROOT} $ENV{HDF5_ROOT}/gnu)
-#endif()
-
-
-#find_package(HDF5 REQUIRED COMPONENTS Fortran HL Fortran_HL)
-find_package(HDF5 REQUIRED COMPONENTS Fortran HL Fortran_HL)
-#find_package(HDF5 REQUIRED COMPONENTS C HL)
-#find_package(HDF5 REQUIRED COMPONENTS Fortran HL Fortran_HL)
+set(HDF5_USE_STATIC_LIBRARIES TRUE)
+find_package(HDF5 1.10 COMPONENTS Fortran HL Fortran_HL REQUIRED)
+#find_package(HDF5 REQUIRED COMPONENTS Fortran HL)
 include_directories(${HDF5_INCLUDE_DIRS})
-
 
 if (HDF5_FOUND)
     message(STATUS "HDF5_LIBRARIES: " ${HDF5_LIBRARIES})
+#    message(STATUS "HDF5_HL_LIBRARIES: " ${HDF5_HL_LIBRARIES})
 endif()
+
+
+# Filter just the HDF5 libraries out of the defined variables. We don't want the dynamic libs like libdl or libz etc.
+foreach(LIBPATH in LIST ${HDF5_LIBRARIES})
+    get_filename_component(LIB ${LIBPATH} NAME)
+    if (${LIB} MATCHES "libhdf5.a")
+        set(HDF5_INTRINSIC_LIBRARIES ${HDF5_INTRINSIC_LIBRARIES} ${LIBPATH})
+    endif()
+    if (${LIB} MATCHES "libhdf5_hl.a")
+        set(HDF5_INTRINSIC_LIBRARIES ${HDF5_INTRINSIC_LIBRARIES} ${LIBPATH})
+    endif()
+    if (${LIB} MATCHES "libhdf5_fortran.a")
+        set(HDF5_INTRINSIC_LIBRARIES ${HDF5_INTRINSIC_LIBRARIES} ${LIBPATH})
+    endif()
+    if (${LIB} MATCHES "libhdf5hl_fortran.a")
+        set(HDF5_INTRINSIC_LIBRARIES ${HDF5_INTRINSIC_LIBRARIES} ${LIBPATH})
+    endif()
+endforeach()
+
+message(STATUS "HDF5 Intrinsic Libraries: " ${HDF5_INTRINSIC_LIBRARIES})
+
+
 
 
 
@@ -121,6 +136,7 @@ endif()
 find_package(LAPACK REQUIRED)
 
 message(STATUS "LAPACK_LIBRARIES: " ${LAPACK_LIBRARIES})
+message(STATUS "BLAS_LIBRARIES: " ${BLAS_LIBRARIES})
 
 
 
@@ -202,10 +218,9 @@ include_directories(${CMAKE_SOURCE_DIR}/src/tools)    # Need include here for ma
 
 
 #----------------------------------------------------------------------------------- 
-#                     Add core library and driver targets
+#                                   Add core library
 #----------------------------------------------------------------------------------- 
 add_library(coredg STATIC ${LIB_SRCS})
-#target_link_libraries(coredg ${HDF5_LIBRARIES} ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} ${TECPLOT_LIBRARIES} ${MPI_Fortran_LIBRARIES})
 target_link_libraries(coredg ${HDF5_LIBRARIES} ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} ${TECPLOT_LIBRARIES})
 set_target_properties(coredg PROPERTIES 
                              COMPILE_FLAGS "${CMAKE_Fortran_FLAGS}"
@@ -213,16 +228,58 @@ set_target_properties(coredg PROPERTIES
                              #COMPILE_FLAGS "${CMAKE_Fortran_FLAGS} ${MPI_Fortran_COMPILE_FLAGS}"
                              #LINK_FLAGS    "${CMAKE_Fortran_LINK_FLAGS} ${MPI_Fortran_LINK_FLAGS}")
 
-# Add driver executable linked to coredg library
+
+
+
+
+
+#-----------------------------------------------------------------------------------
+#                                Build ChiDG interfaces
+#-----------------------------------------------------------------------------------
+
+#
+# Build Fortran driver executable linked to coredg library
+#
 add_executable(chidg ${EXE_SRCS})
-target_link_libraries(chidg coredg ${HDF5_LIBRARIES} ${TECPLOT_LIBRARIES} ${MPI_Fortran_LIBRARIES})
+target_link_libraries(chidg coredg)
 set_target_properties(chidg PROPERTIES 
                             COMPILE_FLAGS "${CMAKE_Fortran_FLAGS}"
-                            LINK_FLAGS    "${CMAKE_Fortran_LINK_FLAGS} -lstdc++ -lpthread")
+                            LINK_FLAGS    "${CMAKE_Fortran_LINK_FLAGS} -lc++ -lpthread")
+                            #LINK_FLAGS    "${CMAKE_Fortran_LINK_FLAGS} -lstdc++ -lpthread")
                             #COMPILE_FLAGS "${CMAKE_Fortran_FLAGS} ${MPI_Fortran_COMPILE_FLAGS}"
                             #LINK_FLAGS    "${CMAKE_Fortran_LINK_FLAGS} ${MPI_Fortran_LINK_FLAGS} -lstdc++ -lpthread")
                             # need to link stdc++ here for tecio
-                            
+
+
+#
+# Build python module
+#
+if (CMAKE_BUILD_TYPE STREQUAL "Release")
+    set(QUIET_STATUS --quiet)
+endif()
+
+add_custom_command(OUTPUT "_chidg.so"
+                   COMMAND f2py 
+                           -c ${PYTHON_SRCS}
+                           -m _chidg
+                           --build-dir "${CMAKE_BINARY_DIR}/lib"
+                           ${CMAKE_BINARY_DIR}/lib/libcoredg.a
+                           ${TECPLOT_LIBRARIES}
+                           ${HDF5_INTRINSIC_LIBRARIES}
+                           --link-lapack_opt
+                           -I${CMAKE_BINARY_DIR}/lib
+                           ${QUIET_STATUS}
+                   DEPENDS ${PYTHON_SRCS} coredg
+                   WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/lib
+                   COMMENT "f2py: Building Python module _chidg")
+
+
+# Add a custom target <name> to trigger the generation of the python module.
+add_custom_target(python ALL DEPENDS "_chidg.so")
+
+# Install the python module
+install(FILES "${CMAKE_BINARY_DIR}/lib/_chidg.so" "${CMAKE_SOURCE_DIR}/src/interfaces/chidg.py"
+        DESTINATION /usr/local/chidg/lib)
 
 
 

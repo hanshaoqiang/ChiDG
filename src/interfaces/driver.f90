@@ -38,7 +38,7 @@ program driver
     !
     implicit none
     type(chidg_t)                       :: chidg
-    type(dict_t)                        :: toptions, noptions, loptions
+    type(dict_t)                        :: toptions, noptions, loptions, poptions
     class(function_t),  allocatable     :: constant, monopole
 
     integer(ik)                         :: narg
@@ -105,7 +105,7 @@ program driver
         call chidg%set('time_scheme',      time_scheme,      toptions)
         call chidg%set('nonlinear_solver', nonlinear_solver, noptions)
         call chidg%set('linear_solver',    linear_solver,    loptions)
-        call chidg%set('preconditioner',   preconditioner)
+        call chidg%set('preconditioner',   preconditioner,   poptions)
 
 
         !

@@ -29,6 +29,7 @@ module type_solverdata
         type(chidgVector_t)             :: rhs                      !< Residual of the spatial scheme
         type(chidgMatrix_t)             :: lhs                      !< Linearization of the spatial scheme
 
+
         !
         ! Time information
         !
@@ -55,6 +56,8 @@ module type_solverdata
         generic, public       :: init => init_base
         procedure, private    :: init_base
 
+
+
     end type solverdata_t
     !*******************************************************************************************************
 
@@ -65,9 +68,6 @@ module type_solverdata
 
 
 contains
-
-
-
 
 
 

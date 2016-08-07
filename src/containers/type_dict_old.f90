@@ -13,6 +13,7 @@ module type_dict
 #include <messenger.h>
     use mod_kinds,      only: rk,ik
     implicit none
+    private
 
 
 
@@ -91,14 +92,15 @@ module type_dict
         procedure           :: print
         procedure           :: contains
 
-        procedure   :: set
-        procedure   :: get
+        generic             :: set => set_real, set_int
+        generic             :: get => get_real, get_int
 
-        procedure   :: set_int
-        procedure   :: set_real
+        procedure, private  :: set_real => set_real_dict
+        procedure, private  :: get_real => get_real_dict
 
-        procedure   :: get_int
-        procedure   :: get_real
+        procedure, private  :: set_int  => set_int_dict
+        procedure, private  :: get_int  => get_int_dict
+
 
     end type dict_t
     !*************************************************
@@ -299,62 +301,18 @@ contains
     !
     !   Routines for Dictionary
     !
-    subroutine get(self,key,val)
-        class(dict_t),   intent(in)  :: self
-        character(len=*),   intent(in)  :: key
-        class(*),           intent(in)  :: val
-
-        select type(val)
-            type is (real(kind=rk))
-                call self%llreal%get(key,val)
-
-            type is (integer(kind=ik))
-                call self%llint%get(key,val)
-
-            class default
-                call chidg_signal(FATAL,"dict%get: invalid type")
-        end select
-
-    end subroutine get
-
-
-    subroutine set(self,key,val)
-        class(dict_t),   intent(inout)   :: self
-        character(len=*),   intent(in)      :: key
-        class(*),           intent(in)      :: val
-
-        select type(val)
-            type is (real(kind=rk))
-                call self%llreal%set(key,val)
-
-            type is (integer(kind=ik))
-                call self%llint%set(key,val)
-
-            class default
-                call chidg_signal(FATAL,"dict%set: invalid type")
-        end select
-
-    end subroutine set
-
-
-
-
-
-
-
-    !******************************************************
-    subroutine get_real(self,key,val)
+    subroutine get_real_dict(self,key,val)
         class(dict_t),    intent(in)    :: self
         character(len=*), intent(in)    :: key
-        real(rk),    intent(inout) :: val
+        real(kind=rk),    intent(inout) :: val
 
         call self%llreal%get(key,val)
     end subroutine 
 
-    subroutine set_real(self,key,val)
+    subroutine set_real_dict(self,key,val)
         class(dict_t),    intent(inout) :: self
         character(len=*), intent(in)    :: key
-        real(rk),    intent(in)    :: val
+        real(kind=rk),    intent(in)    :: val
 
         call self%llreal%set(key,val)
 
@@ -363,18 +321,18 @@ contains
 
 
 
-    subroutine get_int(self,key,val)
+    subroutine get_int_dict(self,key,val)
         class(dict_t),     intent(in)    :: self
         character(len=*),  intent(in)    :: key
-        integer(ik),  intent(inout) :: val
+        integer(kind=ik),  intent(inout) :: val
 
         call self%llint%get(key,val)
     end subroutine 
 
-    subroutine set_int(self,key,val)
+    subroutine set_int_dict(self,key,val)
         class(dict_t),      intent(inout) :: self
         character(len=*),   intent(in)    :: key
-        integer(ik),   intent(in)    :: val
+        integer(kind=ik),   intent(in)    :: val
 
         call self%llint%set(key,val)
 

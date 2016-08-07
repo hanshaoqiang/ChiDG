@@ -206,6 +206,7 @@ contains
         integer(ik) :: ierr
         integer(ik) :: nnodes,nnodes_face,nnodes_vol
 
+
         if (self%numInitialized) call chidg_signal(FATAL,'element%init_sol -- element already initialized')
 
 
@@ -272,6 +273,7 @@ contains
         integer(ik) :: nterms_s,nterms_c,spacedim
         integer(ik) :: nnodes_face, nnodes_vol, igq, igq_s, igq_f
         logical     :: has_correct_nodes_terms
+
 
         spacedim = self%spacedim
         nterms_s = self%nterms_s

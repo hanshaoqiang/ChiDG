@@ -198,7 +198,8 @@ contains
         class(chidg_t),         intent(inout)   :: self
         character(*),           intent(in)      :: selector
         character(*),           intent(in)      :: selection
-        type(dict_t), optional, intent(inout)   :: options 
+        !type(dict_t), optional, intent(inout)   :: options 
+        type(dict_t),           intent(inout)   :: options 
 
         integer(ik) :: ierr
 
