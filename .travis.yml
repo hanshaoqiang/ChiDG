@@ -3,7 +3,8 @@ language: fortran
 
 # Compiler list
 compiler:
-    - gfortran
+    - gfortran-4
+    - gfortran-5
 
 os:
     - osx
@@ -11,6 +12,7 @@ os:
 
 before_install:
     - brew update
+    - brew install cmake
     - brew tap homebrew/science
     - brew install hdf5
 
