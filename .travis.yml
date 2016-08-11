@@ -3,8 +3,7 @@ language: fortran
 
 # Compiler list
 compiler:
-    - gfortran-4
-    - gfortran-5
+    - gfortran
 
 os:
     - osx
