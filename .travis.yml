@@ -11,10 +11,10 @@ os:
 
 before_install:
     - brew update
-    - brew unlink cmake
+    - brew unlink cmake # this cmake might be okay.
     - brew install cmake31
     - brew tap homebrew/science
-    - brew install hdf5
+    - brew install hdf5 --with-fortran
 
 
 
