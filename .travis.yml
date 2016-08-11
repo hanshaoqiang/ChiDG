@@ -1,0 +1,21 @@
+# Enable language support
+language: fortran
+
+# Compiler list
+compiler:
+    - gfortran
+
+
+
+before_install:
+    - brew update
+    - brew tap homebrew/science
+    - brew install hdf5
+
+
+
+# Build
+script:
+    - mkdir build
+    - cd build
+    - cmake .. && make
