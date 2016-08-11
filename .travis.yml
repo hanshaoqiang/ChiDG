@@ -5,6 +5,8 @@ language: fortran
 compiler:
     - gfortran
 
+os:
+    - osx
 
 
 before_install:
