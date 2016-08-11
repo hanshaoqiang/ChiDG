@@ -98,7 +98,8 @@ endif()
 #       The find_package module looks first for $HDF5_ROOT.
 
 set(HDF5_USE_STATIC_LIBRARIES TRUE)
-find_package(HDF5 1.10 COMPONENTS Fortran HL Fortran_HL REQUIRED)
+#find_package(HDF5 1.10 COMPONENTS Fortran HL Fortran_HL REQUIRED)
+find_package(HDF5 COMPONENTS Fortran HL Fortran_HL REQUIRED)
 #find_package(HDF5 REQUIRED COMPONENTS Fortran HL)
 include_directories(${HDF5_INCLUDE_DIRS})
 
