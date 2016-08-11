@@ -108,7 +108,8 @@ if (HDF5_FOUND)
 endif()
 
 
-# Filter just the HDF5 libraries out of the defined variables. We don't want the dynamic libs like libdl or libz etc.
+# Filter just the HDF5 libraries out of the defined variables. 
+# We don't want the dynamic libs like libdl or libz etc.
 # This is to link in the python interface.
 foreach(LIBPATH in LIST ${HDF5_LIBRARIES})
     get_filename_component(LIB ${LIBPATH} NAME)

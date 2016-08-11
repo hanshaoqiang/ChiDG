@@ -12,6 +12,7 @@ os:
 
 before_install:
     - brew update
+    - brew unlink cmake
     - brew install cmake
     - brew tap homebrew/science
     - brew install hdf5
