@@ -34,7 +34,7 @@ Constant pressure outlet boundary condition       |  Fully-implicit nonreflectin
 
 Documentation can be found on the following github page:
 
-[ChiDG Documentation](https://nwukie.github.io/ChiDG_site/ )
+[ChiDG Documentation](https://nwukie.github.io/ChiDG/ )
 
 
 

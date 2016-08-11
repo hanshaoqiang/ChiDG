@@ -65,7 +65,8 @@ elseif (${Fortran_VENDOR} MATCHES "GNU")
     # Note: -fcheck=all has issues with passing null pointer in tecio_interface
     set (USER_COMPILE_FLAGS_DEBUG   "-O0 -cpp --coverage -ffree-form -ffree-line-length-none -fbacktrace -fstack-protector -fcheck=bounds -fmax-stack-var-size=1600 -p -g -Wall")    # Note: -fcheck=all has issues with passing null pointer in tecio_interface
     #set (USER_COMPILE_FLAGS_RELEASE "-O3 -cpp -ffree-form -ffree-line-length-none -fexternal-blas -march=native -funroll-loops -m64")
-    set (USER_COMPILE_FLAGS_RELEASE "-O3 -cpp -fPIC -ffree-form -ffree-line-length-none -fexternal-blas -march=native -funroll-loops -m64 -g")
+    #set (USER_COMPILE_FLAGS_RELEASE "-O3 -cpp -fPIC -ffree-form -ffree-line-length-none -fexternal-blas -march=native -funroll-loops -m64 -g")
+    set (USER_COMPILE_FLAGS_RELEASE "-O3 -cpp -fPIC -ffree-form -ffree-line-length-none -fexternal-blas -funroll-loops -m64 -g")
 
     set (CMAKE_Fortran_LINK_FLAGS_DEBUG "-O0 --coverage")
     set (CMAKE_Fortran_LINK_FLAGS_RELEASE "-O3")
@@ -107,6 +108,7 @@ endif()
 
 
 # Filter just the HDF5 libraries out of the defined variables. We don't want the dynamic libs like libdl or libz etc.
+# This is to link in the python interface.
 foreach(LIBPATH in LIST ${HDF5_LIBRARIES})
     get_filename_component(LIB ${LIBPATH} NAME)
     if (${LIB} MATCHES "libhdf5.a")
