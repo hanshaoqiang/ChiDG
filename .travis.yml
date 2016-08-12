@@ -21,4 +21,4 @@ before_install:
 script:
     - mkdir build
     - cd build
-    - cmake .. && make
+    - cmake -DCMAKE_Fortran_COMPILER=gfortran .. && make
