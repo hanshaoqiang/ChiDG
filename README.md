@@ -6,6 +6,7 @@
 # ChiDG
 
 [![][license img]][license]
+[![Build Status](https://travis-ci.org/nwukie/ChiDG.svg?branch=master)](https://travis-ci.org/nwukie/ChiDG)
 
 A Chimera-based, discontinuous Galerkin solver
 
@@ -113,7 +114,6 @@ and do not necessarily reflect the views of the National Science Foundation.
 
 [license]:LICENSE
 [license img]:https://img.shields.io/badge/license-BSD%203--clause-blue.svg
-
 
 
 
