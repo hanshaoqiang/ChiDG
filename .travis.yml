@@ -14,16 +14,16 @@ language: fortran
 matrix:
     include:
         -os: osx
-            compiler: gfortran
-            before_install:
+            compiler= gfortran
+            before_install=
                 - brew update
                 - brew tap homebrew/science
                 - brew install hdf5 --with-fortran --with-fortran2003
                 - brew uninstall gcc
                 - brew install gcc5
         -os: osx
-            compiler: gfortran
-            before_install: 
+            compiler= gfortran
+            before_install= 
                 - brew update
                 - brew tap homebrew/science
                 - brew install hdf5 --with-fortran --with-fortran2003
