@@ -1,6 +1,6 @@
 project(chidg_v0.1 Fortran)
 #cmake_minimum_required(VERSION 3.4) 
-cmake_minimum_required(VERSION 3.1) 
+cmake_minimum_required(VERSION 3.0) 
 
 
 
@@ -8,7 +8,9 @@ if (CMAKE_MAJOR_VERSION EQUAL 3 AND CMAKE_MINOR_VERSION EQUAL 6 AND CMAKE_PATCH_
     message(FATAL_ERROR "cmake versions 3.6.0 and 3.6.1 have a regression and breaks the build. Please use a different version of cmake.")
 endif()
 
-
+if (CMAKE_MAJOR_VERSION EQUAL 3 AND CMAKE_MINOR_VERSION EQUAL 6 AND CMAKE_PATCH_VERSION EQUAL 1)
+    message(FATAL_ERROR "cmake versions 3.6.0 and 3.6.1 have a regression and breaks the build. Please use a different version of cmake.")
+endif()
 
 #-----------------------------------------------------------------------------------
 #                       CMake macros for adding source files
@@ -31,8 +33,10 @@ set(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 #-----------------------------------------------------------------------------------
 #                       Enable testing with -DTESTING=True
 #-----------------------------------------------------------------------------------
+# Set default to not build tests
 set(TESTING FALSE CACHE BOOL "Enable building unit/regression testing")
 
+# Set default build type to "Release"
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build. Options are: Debug Release" FORCE)
 endif()
