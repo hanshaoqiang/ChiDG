@@ -1,7 +1,12 @@
 project(chidg_v0.1 Fortran)
 #cmake_minimum_required(VERSION 3.4) 
-cmake_minimum_required(VERSION 3.0) 
+cmake_minimum_required(VERSION 3.1) 
 
+
+
+if (CMAKE_MAJOR_VERSION EQUAL 3 AND CMAKE_MINOR_VERSION EQUAL 6 AND CMAKE_PATCH_VERSION EQUAL 0)
+    message(FATAL_ERROR "cmake versions 3.6.0 and 3.6.1 have a regression and breaks the build. Please use a different version of cmake.")
+endif()
 
 
 
@@ -27,6 +32,7 @@ set(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 #                       Enable testing with -DTESTING=True
 #-----------------------------------------------------------------------------------
 set(TESTING FALSE CACHE BOOL "Enable building unit/regression testing")
+#set(CMAKE_BUILD_TYPE "Release" CACHE)
 
 
 

@@ -14,7 +14,7 @@ before_install:
     - brew unlink cmake # this cmake might be okay.
     - brew install cmake31
     - brew tap homebrew/science
-    - brew install hdf5 --with-fortran
+    - brew install hdf5 --with-fortran --with-fortran2003
 
 
 
@@ -22,4 +22,4 @@ before_install:
 script:
     - mkdir build
     - cd build
-    - cmake .. && make
+    - cmake -DCMAKE_BUILD_TYPE=Release .. && make
