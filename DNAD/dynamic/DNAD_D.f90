@@ -1689,6 +1689,7 @@ CONTAINS
         !REAL(DBL_AD), intent(in)     :: u(:,:)
         REAL(rk), intent(in)     :: u(:,:)
         TYPE(AD_D), intent(in)       :: v(:)
+        REAL(rk)                     :: tmpv(size(v))
 !        TYPE(AD_D)                      :: res(size(v))
 !        TYPE(AD_D)                      :: res(size(u,1))  !> Causes memory leak in ifort 15.0.3. Doesn't seem to be deallocating everything correctly
         TYPE(AD_D), allocatable, dimension(:) :: res        !> Declaring as allocatable to fix memory leak
@@ -1714,7 +1715,9 @@ CONTAINS
         !
         ! Standard matrix multiplication of function values
         !
-        res%x_ad_ = MATMUL(u,v%x_ad_)
+        tmpv = v%x_ad_
+        !res%x_ad_ = MATMUL(u,v%x_ad_)
+        res%x_ad_ = MATMUL(u,tmpv)
 
 !        !
 !        ! Assemble derivative components as a matrix
