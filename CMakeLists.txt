@@ -32,7 +32,10 @@ set(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 #                       Enable testing with -DTESTING=True
 #-----------------------------------------------------------------------------------
 set(TESTING FALSE CACHE BOOL "Enable building unit/regression testing")
-#set(CMAKE_BUILD_TYPE "Release" CACHE)
+
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build. Options are: Debug Release" FORCE)
+endif()
 
 
 
