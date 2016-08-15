@@ -12,7 +12,7 @@ before_install:
     - brew update
     - brew tap homebrew/science
     - brew uninstall gcc
-    - brew install gcc6
+#    - brew install gcc6
     - brew install hdf5 --with-fortran --with-fortran2003
 
 
