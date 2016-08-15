@@ -3,7 +3,7 @@ language: fortran
 
 # Compiler list
 compiler:
-    - gfortran-5
+    - gfortran-6
 
 os:
     - osx
@@ -11,9 +11,9 @@ os:
 before_install:
     - brew update
     - brew tap homebrew/science
-    - brew install hdf5 --with-fortran --with-fortran2003
     - brew uninstall gcc
-    - brew install gcc5
+    - brew install gcc6
+    - brew install hdf5 --with-fortran --with-fortran2003
 
 
 
@@ -21,4 +21,4 @@ before_install:
 script:
     - mkdir build
     - cd build
-    - cmake -DCMAKE_Fortran_COMPILER=gfortran-5 .. && make
+    - cmake -DCMAKE_Fortran_COMPILER=gfortran-6 .. && make
