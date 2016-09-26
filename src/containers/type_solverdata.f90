@@ -29,6 +29,10 @@ module type_solverdata
         type(chidgVector_t)             :: rhs                      !< Residual of the spatial scheme
         type(chidgMatrix_t)             :: lhs                      !< Linearization of the spatial scheme
 
+        !
+        ! Blockage
+        !
+        type(chidgVector_t)             :: blockage
 
         !
         ! Time information
@@ -98,12 +102,9 @@ contains
         !
         ! Initialize and allocate storage
         !
-        call self%q%init(  mesh)
-!        print*, '**********************************************'
-!        print*, 'Warning - LHS not initialized'
-!        print*, '**********************************************'
-        call self%dq%init( mesh)
-        call self%rhs%init(mesh)
+        call self%q%init(  mesh, 'equations')
+        call self%dq%init( mesh, 'equations')
+        call self%rhs%init(mesh, 'equations')
         call self%lhs%init(mesh,bcset_coupling,'full')
 
 

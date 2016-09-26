@@ -15,6 +15,11 @@ module type_bc
     private
 
 
+    ! Export class methods so they can be used by extended types in the python interface
+    public :: get_nproperties, get_property_name, get_noptions, &
+              get_option_key, get_option_value, get_ncoupled_elems, &
+              get_name, set_name, set_fcn, set_fcn_option
+
 
 
     !> Abstract base-type for boundary conditions
@@ -25,7 +30,7 @@ module type_bc
     !!  @date   2/3/2016
     !!
     !--------------------------------------------------------------------------------------------
-    type, public, abstract :: bc_t
+    type, public :: bc_t
 
         character(len=:),   allocatable :: name
         logical,    public              :: isInitialized = .false.  !< Logical switch for indicating the boundary condition initializaiton status
@@ -49,56 +54,57 @@ module type_bc
 
 
 
-        procedure                               :: init                     !< Boundary condition initialization
-        procedure                               :: init_spec                !< Call specialized initialization routine
-        procedure                               :: init_boundary_coupling   !< Initialize book-keeping for coupling interaction between elements.
-        procedure(compute_interface), deferred  :: compute                  !< Implements boundary condition function
-        procedure                               :: apply                    !< Apply bc function over bc elements
+        procedure   :: init                     !< Boundary condition initialization
+        procedure   :: init_spec                !< Call specialized initialization routine
+        procedure   :: init_boundary_coupling   !< Initialize book-keeping for coupling interaction between elements.
+        procedure   :: compute                  !< Implements boundary condition function
+        procedure   :: apply                    !< Apply bc function over bc elements
+        !procedure(compute_interface), deferred  :: compute                  !< Implements boundary condition function
 
 
 
-        procedure   :: set_name                                 !< Set the boundary condition name
-        procedure   :: get_name                                 !< Return the boundary condition name
+        procedure   :: set_name                !< Set the boundary condition name
+        procedure   :: get_name                !< Return the boundary condition name
 
         
-        procedure   :: add_options                              !< Specialized by each bc_t implementation. Adds options available
+        procedure   :: add_options             !< Specialized by each bc_t implementation. Adds options available
 
-        procedure   :: set_fcn                                  !< Set a particular function definition for a specified bcfunction_t
-        procedure   :: set_fcn_option                           !< Set function-specific options for a specified bcfunction_t
+        procedure   :: set_fcn                 !< Set a particular function definition for a specified bcfunction_t
+        procedure   :: set_fcn_option          !< Set function-specific options for a specified bcfunction_t
 
 
-        procedure   :: get_nproperties                          !< Return the number of properties associated with the boundary condition.
-        procedure   :: get_property_name                        !< Return the name of a property given a property index.
+        procedure   :: get_nproperties         !< Return the number of properties associated with the boundary condition.
+        procedure   :: get_property_name       !< Return the name of a property given a property index.
 
-        procedure   :: get_noptions                             !< Return the number of available options for a given property, specified by a property index.
-        procedure   :: get_option_key                           !< Return the key for an option, given a property index and subsequent option index.
-        procedure   :: get_option_value                         !< Return the value of a given key, inside of a specified property.
+        procedure   :: get_noptions            !< Return the number of available options for a given property, specified by a property index.
+        procedure   :: get_option_key          !< Return the key for an option, given a property index and subsequent option index.
+        procedure   :: get_option_value        !< Return the value of a given key, inside of a specified property.
 
-        procedure   :: get_ncoupled_elems                       !< Return the number of elements coupled with a specified boundary element.
+        procedure   :: get_ncoupled_elems      !< Return the number of elements coupled with a specified boundary element.
 
     end type bc_t
     !*********************************************************************************************
 
 
 
-    abstract interface
-        subroutine compute_interface(self,mesh,sdata,prop,face,flux)
-            use mod_kinds,  only: ik
-            import bc_t
-            import mesh_t
-            import solverdata_t
-            import properties_t
-            import face_info_t
-            import function_info_t
-
-            class(bc_t),            intent(inout)   :: self
-            type(mesh_t),           intent(in)      :: mesh(:)
-            type(solverdata_t),     intent(inout)   :: sdata
-            class(properties_t),    intent(inout)   :: prop
-            type(face_info_t),      intent(in)      :: face
-            type(function_info_t),  intent(in)      :: flux
-        end subroutine
-    end interface
+!    abstract interface
+!        subroutine compute_interface(self,mesh,sdata,prop,face,flux)
+!            use mod_kinds,  only: ik
+!            import bc_t
+!            import mesh_t
+!            import solverdata_t
+!            import properties_t
+!            import face_info_t
+!            import function_info_t
+!
+!            class(bc_t),            intent(inout)   :: self
+!            type(mesh_t),           intent(in)      :: mesh(:)
+!            type(solverdata_t),     intent(inout)   :: sdata
+!            class(properties_t),    intent(inout)   :: prop
+!            type(face_info_t),      intent(in)      :: face
+!            type(function_info_t),  intent(in)      :: flux
+!        end subroutine
+!    end interface
 
 
 
@@ -169,7 +175,7 @@ contains
         !
         ! Allocate storage for element and face indices
         !
-        allocate(self%elems(nelem_bc), self%faces(nelem_bc), self%coupled_elems(nelem_bc), stat=ierr)
+        allocate(self%dom(nelem_bc), self%elems(nelem_bc), self%faces(nelem_bc), self%coupled_elems(nelem_bc), stat=ierr)
         if (ierr /= 0) call AllocationError
 
 
@@ -182,6 +188,7 @@ contains
                 do ixi = xi_begin,xi_end
                     ielem = ixi + nelem_xi*(ieta-1) + nelem_xi*nelem_eta*(izeta-1)
 
+                    self%dom(ielem_bc)   = mesh%idomain
                     self%elems(ielem_bc) = ielem
                     self%faces(ielem_bc) = iface
                     ielem_bc = ielem_bc + 1
@@ -739,8 +746,16 @@ contains
 
 
 
+    subroutine compute(self,mesh,sdata,prop,face,flux)
+        class(bc_t),            intent(inout)   :: self
+        type(mesh_t),           intent(in)      :: mesh(:)
+        type(solverdata_t),     intent(inout)   :: sdata
+        class(properties_t),    intent(inout)   :: prop
+        type(face_info_t),      intent(in)      :: face
+        type(function_info_t),  intent(in)      :: flux
 
 
+    end subroutine compute
 
 
 end module type_bc

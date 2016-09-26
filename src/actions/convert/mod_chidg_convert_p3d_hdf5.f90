@@ -10,8 +10,12 @@
 !--------------------------------------------------------------------------------------------
 module mod_chidg_convert_p3d_hdf5
 #include <messenger.h>
-    use mod_kinds,      only: rk,ik, rdouble
-    use mod_constants,  only: IO_DESTINATION
+    use mod_kinds,          only: rk,ik, rdouble
+    use mod_constants,      only: IO_DESTINATION
+    use mod_hdf_utilities,  only: initialize_chidg_file_hdf, set_storage_version_major_hdf, &
+                                  set_storage_version_minor_hdf, set_ndomains_hdf, set_domain_index_hdf, &
+                                  set_domain_mapping_hdf, set_domain_dimensionality_hdf, set_domain_equation_set_hdf, &
+                                  set_contains_grid_hdf, STORAGE_FORMAT_MAJOR, STORAGE_FORMAT_MINOR
     use hdf5
     use h5lt
     implicit none
@@ -33,13 +37,8 @@ contains
     subroutine chidg_convert_p3d_hdf5(filename)
         character(*),   intent(in)  :: filename
 
-
-        ! Attribute info
-        integer, dimension(1), parameter  :: STORAGE_FORMAT_MAJOR = 0
-        integer, dimension(1), parameter  :: STORAGE_FORMAT_MINOR = 2
-
         ! File, group vars
-        character(1024)             :: file_prefix, hdf_file, blockgroup, blockname
+        character(1024)             :: file_prefix, blockgroup, blockname
         logical                     :: file_exists
 
         ! HDF5 vars
@@ -51,9 +50,10 @@ contains
 
         ! Plot3d vars
         integer(ik)                 :: i,j,k,imax,jmax,kmax,ext_loc, fileunit
-        integer(ik)                 :: ierr,igrid,nelem,nblks,mapping, spacedim
+        integer(ik)                 :: igrid,nelem,nblks,mapping, spacedim
         integer(ik),    allocatable :: blkdims(:,:)
         real(rdouble),  allocatable :: xcoords(:,:,:), ycoords(:,:,:), zcoords(:,:,:)
+        integer                     :: ierr
 
         ! equation set string
         character(len=100)          :: eqnset_string
@@ -62,11 +62,6 @@ contains
         integer(ik)                 :: ximin_bc, ximax_bc, etamin_bc, etamax_bc, zetamin_bc, zetamax_bc
 
 
-        !
-        ! Print ChiDG Header
-        !
-        !call print_header()
-    
         !
         ! Send output to screen, not file.
         !
@@ -82,7 +77,6 @@ contains
             call write_line("Found "//trim(filename))
             ext_loc = index(filename,'.')           ! get location of extension
             file_prefix = filename(1:(ext_loc-1))   ! save file prefix w/o extension
-            hdf_file = trim(file_prefix)//'.h5'     ! set hdf5 filename with extension
         else
             call chidg_signal_one(FATAL,"File not found.",filename)
         end if
@@ -92,18 +86,21 @@ contains
         !
         ! Initialize HDF5
         !
-        ! HDF5 interface
-        call h5open_f(ierr)                                         ! Open HDF5
+        call h5open_f(ierr)
         if (ierr /= 0) call chidg_signal(FATAL,"Error: h5open_f")
-        call h5fcreate_f(hdf_file, H5F_ACC_TRUNC_F, file_id, ierr)  ! Create HDF5 file
-        if (ierr /= 0) call chidg_signal(FATAL,"Error: h5fcreate_f")
 
+
+        !
+        ! Create base ChiDG file and get file identifier
+        !
+        file_id = initialize_chidg_file_hdf(file_prefix)
+
+
+        !
         ! Add file major.minor version numbers as attributes
-        adim = 1
-        call h5ltset_attribute_int_f(file_id, "/", 'FORMAT_MAJOR', STORAGE_FORMAT_MAJOR, adim, ierr)
-        call h5ltset_attribute_int_f(file_id, "/", 'FORMAT_MINOR', STORAGE_FORMAT_MINOR, adim, ierr)
-
-
+        !
+        call set_storage_version_major_hdf(file_id,STORAGE_FORMAT_MAJOR)
+        call set_storage_version_minor_hdf(file_id,STORAGE_FORMAT_MINOR)
 
 
         !
@@ -114,18 +111,10 @@ contains
         call write_line(nblks," grid blocks", delimiter=" ")
 
 
-
-        !
-        ! Add grid/solution attributes. Indicating the file contains a grid, and no solution.
-        !
-        call h5ltset_attribute_string_f(file_id, "/", 'contains_grid', 'Yes', ierr)
-        call h5ltset_attribute_string_f(file_id, "/", 'contains_solution', 'No', ierr)
-
-
         !
         ! Add number of grid domains as attribute
         !
-        call h5ltset_attribute_int_f(file_id, "/", 'ndomains', [nblks], adim, ierr)
+        call set_ndomains_hdf(file_id,nblks)
 
 
         !
@@ -178,8 +167,8 @@ contains
             if (ierr /= 0) stop "memory allocation error: plot3d_to_hdf5"
 
             read(fileunit) ((( xcoords(i,j,k), i=1,imax), j=1,jmax), k=1,kmax), &
-                    ((( ycoords(i,j,k), i=1,imax), j=1,jmax), k=1,kmax), &
-                    ((( zcoords(i,j,k), i=1,imax), j=1,jmax), k=1,kmax)
+                           ((( ycoords(i,j,k), i=1,imax), j=1,jmax), k=1,kmax), &
+                           ((( zcoords(i,j,k), i=1,imax), j=1,jmax), k=1,kmax)
 
             !
             ! Create a domain-group for the current block domain
@@ -192,9 +181,10 @@ contains
             !
             ! Write domain attributes
             !
-            call h5ltset_attribute_int_f(file_id, trim(blockgroup), 'idomain',  [igrid],    adim, ierr)
-            call h5ltset_attribute_int_f(file_id, trim(blockgroup), 'mapping',  [mapping],  adim, ierr)
-            call h5ltset_attribute_int_f(file_id, trim(blockgroup), 'spacedim', [spacedim], adim, ierr)
+            call set_domain_index_hdf(block_id,igrid)
+            call set_domain_mapping_hdf(block_id,mapping)
+            call set_domain_dimensionality_hdf(block_id, spacedim)
+
 
             !
             ! Create a grid-group within the current block domain
@@ -247,8 +237,7 @@ contains
             !
             ! Write equationset attribute
             !
-            call h5ltset_attribute_string_f(Block_id, ".", 'eqnset', trim(eqnset_string), ierr)
-
+            call set_domain_equation_set_hdf(Block_id,trim(eqnset_string))
 
 
             !
@@ -322,6 +311,15 @@ contains
 
             deallocate(zcoords,ycoords,xcoords)
         end do
+
+
+
+
+        !
+        ! Add grid/solution attributes. Indicating the file contains a grid, and no solution.
+        !
+        call set_contains_grid_hdf(file_id,"True")
+
 
 
 

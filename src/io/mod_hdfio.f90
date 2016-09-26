@@ -5,9 +5,12 @@ module mod_hdfio
     use type_meshdata,      only: meshdata_t
     use type_bcdata,        only: bcdata_t
     use type_bc,            only: bc_t
-    use mod_bc,             only: create_bc
+    use mod_bc,             only: bc_factory
     use type_chidg_data,    only: chidg_data_t
-    use mod_hdf_utilities,  only: get_ndomains_hdf, get_domain_names_hdf, get_eqnset_hdf
+    use mod_hdf_utilities,  only: get_ndomains_hdf, get_domain_names_hdf, get_domain_equation_sets_hdf, &
+                                  set_solution_order_hdf, get_solution_order_hdf, set_coordinate_order_hdf, &
+                                  get_domain_mapping_hdf, get_domain_dimensionality_hdf, set_contains_solution_hdf, &
+                                  set_domain_equation_set_hdf, check_file_storage_version_hdf
     use mod_io,             only: nterms_s
 
     use hdf5
@@ -40,7 +43,7 @@ contains
         character(*),                   intent(in)      :: filename
         type(meshdata_t), allocatable,  intent(inout)   :: meshdata(:)
 
-        integer(HID_T)   :: fid, gid, sid, did_x, did_y, did_z      ! Identifiers
+        integer(HID_T)   :: fid, block_id, gid, sid, did_x, did_y, did_z      ! Identifiers
         integer(HSIZE_T) :: dims(3), maxdims(3)                     ! Dataspace dimensions
 
         type(c_ptr)                                             :: pts
@@ -84,6 +87,15 @@ contains
 
 
         !
+        ! Check file format major.minor version
+        !
+        call check_file_storage_version_hdf(fid)
+
+        
+
+
+
+        !
         !  Get number of domains from attribute 'ndomains' in file root
         !
         ndomains = get_ndomains_hdf(fid)
@@ -111,7 +123,8 @@ contains
         ! Get equationset strings.
         !
         dnames   = get_domain_names_hdf(fid)
-        eqnset   = get_eqnset_hdf(fid,dnames)
+        eqnset   = get_domain_equation_sets_hdf(fid,dnames)
+        !eqnset   = get_eqnset_hdf(fid,dnames)
 
 
 
@@ -125,25 +138,27 @@ contains
                 gname = dnames(idom)
 
                 !
+                ! Open domain
+                !
+                call h5gopen_f(fid, trim(gname), block_id, ierr, H5P_DEFAULT_F)
+
+
+
+                !
                 ! Open the Domain/Grid group
                 !
-                call h5gopen_f(fid, trim(gname)//"/Grid", gid, ierr, H5P_DEFAULT_F)
+                call h5gopen_f(block_id, "Grid", gid, ierr, H5P_DEFAULT_F)
                 if (ierr /= 0) call chidg_signal_one(FATAL,"read_grid_hdf: Domagin/Grid group did not open properly.", trim(gname)//'/Grid')
 
 
                 !
                 !  Get number of terms in coordinate expansion
                 !
-                call h5ltget_attribute_int_f(fid, trim(gname), 'mapping', mapping_buf, ierr)
-                mapping = mapping_buf(1)
-                if (ierr /= 0) stop "Error: read_grid_hdf5 - h5ltget_attribute_int_f"
+                mapping = get_domain_mapping_hdf(block_id)
                 nterms_1d = (mapping + 1)
 
 
-                call h5ltget_attribute_int_f(fid, trim(gname), 'spacedim', spacedim_buf, ierr)
-                spacedim = spacedim_buf(1)
-
-
+                spacedim = get_domain_dimensionality_hdf(block_id)
                 if ( spacedim == THREE_DIM ) then
                     nterms_c = nterms_1d * nterms_1d * nterms_1d
                 else if ( spacedim == TWO_DIM ) then
@@ -235,6 +250,7 @@ contains
                 ! Close the Domain/Grid group
                 !
                 call h5gclose_f(gid,ierr)
+                call h5gclose_f(block_id,ierr)
 
                 ! Deallocate points for the current domain
                 deallocate(zpts,ypts,xpts)
@@ -295,8 +311,8 @@ contains
         type(chidg_data_t), intent(inout)   :: data
 
 
-        integer(HID_T)   :: gid, sid, vid           ! Identifiers
-        integer(HSIZE_T) :: maxdims(3)              ! Dataspace dimensions
+        integer(HID_T)   :: block_id, gid, sid, vid     ! Identifiers
+        integer(HSIZE_T) :: maxdims(3)                  ! Dataspace dimensions
         integer(HSIZE_T) :: dims(3)
 
         integer, dimension(1)               :: ibuf
@@ -323,21 +339,23 @@ contains
         idom = data%get_domain_index(dname)
 
 
+        !
+        ! Open Domain group
+        !
+        call h5gopen_f(fid, trim(dname), block_id, ierr, H5P_DEFAULT_F)
+
 
         !
         ! Open the Domain/Variables group
         !
-        call h5gopen_f(fid, trim(dname)//"/Variables", gid, ierr, H5P_DEFAULT_F)
+        call h5gopen_f(block_id, "Variables", gid, ierr, H5P_DEFAULT_F)
         if (ierr /= 0) call chidg_signal(FATAL,"h5gopen_f -- Domain/Grid group did not open properly")
 
 
         !
         ! Get number of terms in solution expansion
         !
-        call h5ltget_attribute_int_f(fid, trim(dname), 'order_solution', ibuf, ierr)
-
-        order = ibuf(1)
-        if (ierr /= 0) call chidg_signal(FATAL,"read_variable_hdf5 - h5ltget_attribute_int_f")
+        order = get_solution_order_hdf(block_id)
         nterms_1d = (order + 1) ! To be consistent with the definition of (Order = 'Order of the polynomial')
 
 
@@ -437,6 +455,7 @@ contains
         !
         call h5dclose_f(vid,ierr)       ! Close the variable dataset
         call h5gclose_f(gid,ierr)       ! Close the Domain/Variable group
+        call h5gclose_f(block_id,ierr)
 
 
     end subroutine read_variable_hdf
@@ -624,7 +643,7 @@ contains
         !
         ! Update 'contains_solution' attribute
         !
-        call h5ltset_attribute_string_f(fid, "/", 'contains_solution', 'Yes', ierr)
+        call set_contains_solution_hdf(fid,"True")
 
 
         call h5pclose_f(crp_list, ierr) ! Close dataset creation property
@@ -679,7 +698,6 @@ contains
         character(len=:),   allocatable :: cvar
         logical                         :: fileexists = .false.
 
-
         !
         ! Get number of domains contained in the ChiDG data instance
         !
@@ -692,8 +710,6 @@ contains
         time = 1
 
 
-
-
         !
         ! Check file exists
         !
@@ -701,20 +717,21 @@ contains
         if (.not. fileexists) call chidg_signal_one(FATAL,"Error: read_solution_hdf5 - file not found: ", filename)
 
 
+
         !
-        ! Initialize Fortran interface.
+        ! Initialize Fortran interface. Open file
         !
         call h5open_f(ierr)
         if (ierr /= 0) call chidg_signal(FATAL,"read_solution_hdf5 - h5open_f")
-
-
-        !
-        ! Open input file using default properties.
-        !
         call h5fopen_f(filename, H5F_ACC_RDONLY_F, fid, ierr)
         if (ierr /= 0) call chidg_signal(FATAL,"read_solution_hdf5 - h5fopen_f")
 
 
+
+        !
+        ! Check file format major.minor version
+        !
+        call check_file_storage_version_hdf(fid)
 
 
 
@@ -795,7 +812,7 @@ contains
         type(chidg_data_t), intent(inout)   :: data
 
 
-        integer(HID_T)                  :: fid
+        integer(HID_T)                  :: fid, block_id
         integer(HSIZE_T)                :: adim
         integer(ik)                     :: idom, ndomains
         integer(ik)                     :: ieqn, neqns, spacedim
@@ -853,6 +870,12 @@ contains
             
 
             !
+            ! Open domain
+            !
+            call h5gopen_f(fid, trim(dname), block_id, ierr, H5P_DEFAULT_F)
+
+
+            !
             ! Write domain attributes: solution order, equation set
             !
             adim = 1
@@ -874,11 +897,8 @@ contains
 
             end if
 
-            call h5ltset_attribute_int_f(fid, trim(dname), 'order_solution', [order_s], adim, ierr)
-            if (ierr /= 0) call chidg_signal(FATAL,"write_variable_hdf5 - h5ltset_attribute_int_f")
-
-            call h5ltset_attribute_string_f(fid, trim(dname), 'eqnset', trim(data%eqnset(idom)%item%name), ierr)
-            if (ierr /= 0) call chidg_signal(FATAL,"write_variable_hdf5 - h5ltset_attribute_int_f")
+            call set_solution_order_hdf(block_id,order_s)
+            call set_domain_equation_set_hdf(block_id,trim(data%eqnset(idom)%item%name))
 
 
 
@@ -903,6 +923,9 @@ contains
                 !
                 call write_variable_hdf(fid,cvar,time,dname,data)
             end do ! ieqn
+
+
+            call h5gclose_f(block_id,ierr)
 
         end do ! idom
 
@@ -1078,7 +1101,7 @@ contains
                         !
                         ! Create boundary condition from face data
                         !
-                        call create_bc(trim(bcname),bc)
+                        call bc_factory%create(trim(bcname),bc)
 
 
 

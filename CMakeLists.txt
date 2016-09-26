@@ -238,15 +238,22 @@ include_directories(${CMAKE_SOURCE_DIR}/src/tools)    # Need include here for ma
 #----------------------------------------------------------------------------------- 
 #                                   Add core library
 #----------------------------------------------------------------------------------- 
-add_library(coredg STATIC ${LIB_SRCS})
+#add_library(coredg_static STATIC ${LIB_SRCS})
+#target_link_libraries(coredg_static ${HDF5_LIBRARIES} ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} ${TECPLOT_LIBRARIES})
+#set_target_properties(coredg_static PROPERTIES 
+#                             COMPILE_FLAGS "${CMAKE_Fortran_FLAGS}"
+#                             LINK_FLAGS    "${CMAKE_Fortran_LINK_FLAGS}")  # Link Static
+#                             #COMPILE_FLAGS "${CMAKE_Fortran_FLAGS} ${MPI_Fortran_COMPILE_FLAGS}"
+#                             #LINK_FLAGS    "${CMAKE_Fortran_LINK_FLAGS} ${MPI_Fortran_LINK_FLAGS}")
+
+
+add_library(coredg SHARED ${LIB_SRCS})
 target_link_libraries(coredg ${HDF5_LIBRARIES} ${LAPACK_LIBRARIES} ${BLAS_LIBRARIES} ${TECPLOT_LIBRARIES})
 set_target_properties(coredg PROPERTIES 
                              COMPILE_FLAGS "${CMAKE_Fortran_FLAGS}"
-                             LINK_FLAGS    "${CMAKE_Fortran_LINK_FLAGS}")
+                             LINK_FLAGS    "${CMAKE_Fortran_LINK_FLAGS} -lc++") # Link Shared
                              #COMPILE_FLAGS "${CMAKE_Fortran_FLAGS} ${MPI_Fortran_COMPILE_FLAGS}"
                              #LINK_FLAGS    "${CMAKE_Fortran_LINK_FLAGS} ${MPI_Fortran_LINK_FLAGS}")
-
-
 
 
 
@@ -269,39 +276,6 @@ set_target_properties(chidg PROPERTIES
                             # need to link stdc++ here for tecio
 
 
-#
-# Build python module
-#
-if (CMAKE_BUILD_TYPE STREQUAL "Release")
-    set(QUIET_STATUS --quiet)
-endif()
-
-add_custom_command(OUTPUT "_chidg.so"
-                   COMMAND f2py 
-                           -c ${PYTHON_SRCS}
-                           -m _chidg
-                           --build-dir "${CMAKE_BINARY_DIR}/lib"
-                           ${CMAKE_BINARY_DIR}/lib/libcoredg.a
-                           ${TECPLOT_LIBRARIES}
-                           ${HDF5_INTRINSIC_LIBRARIES}
-                           --link-lapack_opt
-                           -I${CMAKE_BINARY_DIR}/lib
-                           ${QUIET_STATUS}
-                   DEPENDS ${PYTHON_SRCS} coredg
-                   WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/lib
-                   COMMENT "f2py: Building Python module _chidg")
-
-
-# Add a custom target <name> to trigger the generation of the python module.
-add_custom_target(python ALL DEPENDS "_chidg.so")
-
-# Install the python module
-install(FILES "${CMAKE_BINARY_DIR}/lib/_chidg.so" "${CMAKE_SOURCE_DIR}/src/interfaces/chidg.py"
-        DESTINATION /usr/local/chidg/lib)
-
-
-
-
 
 
 #-----------------------------------------------------------------------------------
@@ -311,6 +285,8 @@ install(TARGETS chidg coredg
         RUNTIME DESTINATION /usr/local/chidg/bin
         LIBRARY DESTINATION /usr/local/chidg/lib
         ARCHIVE DESTINATION /usr/local/chidg/lib)
+
+install(DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/ DESTINATION /usr/local/chidg/include)
 
 
 

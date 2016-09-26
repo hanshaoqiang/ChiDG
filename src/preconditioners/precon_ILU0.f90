@@ -106,7 +106,7 @@ contains
         !
         ! Test preconditioner initialization
         !
-        if ( .not. self%initialized ) call chidg_signal(FATAL,'preconditioner::ILU0%update - preconditioner has not yet been initialized')
+        if ( .not. self%initialized ) call chidg_signal(FATAL,"preconditioner::ILU0%update - preconditioner has not yet been initialized. Make sure chidg%init('finalize') has been called")
 
 
         !

@@ -8,11 +8,11 @@ module messenger
     character(len=2), parameter     :: default_delimiter = '  '     ! Delimiter of line parameters
     character(len=:), allocatable   :: current_delimiter            ! Delimiter of line parameters
     integer                         :: unit                         ! Unit of log file
-    integer                         :: max_msg_length = 300         ! Maximum width of message line
+    !integer                         :: max_msg_length = 103          ! Maximum width of message line
+    integer                         :: max_msg_length = 300          ! Maximum width of message line
     logical                         :: log_initialized = .false.    ! Status of log file
 
-    character(len=:), allocatable   :: color_begin
-    character(len=:), allocatable   :: color_end
+    character(len=:), allocatable   :: color_begin, color_end
 
 contains
 
@@ -98,31 +98,35 @@ contains
     !!  @param[in]  info_two    Optional auxiliary information to be reported.
     !!
     !-------------------------------------------------------------------------------------------------------------
-    subroutine message(pathname, linenum, sig, msg, info_one, info_two, info_three)
+    !subroutine message(pathname, linenum, sig, msg, info_one, info_two, info_three)
+    subroutine message(pathname, linenum, sig, user_msg, info_one, info_two, info_three, dev_msg)
         character(*), intent(in)                        :: pathname
         integer(ik),  intent(in)                        :: linenum
         integer(ik),  intent(in)                        :: sig
-        character(*), intent(in)                        :: msg
+        !character(*), intent(in)                        :: msg
+        character(*), intent(in)                        :: user_msg
         class(*),     intent(in), target,   optional    :: info_one
         class(*),     intent(in), target,   optional    :: info_two
         class(*),     intent(in), target,   optional    :: info_three
+        character(*), intent(in),           optional    :: dev_msg
 
         integer                         :: iaux, pathstart
         integer(ik)                     :: ierr
         character(len=:), allocatable   :: subpath, temppath
         class(*), pointer               :: auxdata => null()
-        character(100)                  :: warnstr, errstr, killstr, genstr, starstr, linechar, dashstr, blankstr
+        character(100)                  :: warnstr, errstr, killstr, genstr, starstr, linechar, dashstr, blankstr, oopsstr
         logical                         :: print_info_one   = .false.
         logical                         :: print_info_two   = .false.
         logical                         :: print_info_three = .false.
 
 
-        warnstr =  '***************************************  Warning  ***************************************'
-        errstr  =  '***********************************  Non-fatal error  ***********************************'
-        killstr =  '*************************************  Fatal error  *************************************'
-        starstr =  '*****************************************************************************************'
-        dashstr =  '-----------------------------------------------------------------------------------------'
-        blankstr = '               '
+        oopsstr  = '                                         ... Oops :/                                           '
+        warnstr  = '******************************************  Warning  ******************************************'
+        errstr   = '**************************************  Non-fatal error  **************************************'
+        killstr  = '****************************************  Fatal error  ****************************************'
+        starstr  = '***********************************************************************************************'
+        dashstr  = '-----------------------------------------------------------------------------------------------'
+        blankstr = new_line('A')
 
 
         !
@@ -149,42 +153,46 @@ contains
         !
         call write_line(blankstr)
         call write_line(trim(dashstr))
-
-
-
-
-        !
-        ! Select signal message
-        !
         select case (sig)
-            case (0)    ! Normal message -- Code continues
-                call write_line(trim(msg))
-
+            case (0)    ! Normal message  -- Code continues
+                call write_line(trim(user_msg), color='aqua', ltrim=.false., bold=.true.)
             case (1)    ! Warning message -- Code continues
-                call write_line(trim(warnstr))
-                call write_line(trim(genstr))
-                call write_line(blankstr)
-                call write_line('Message:')
-                call write_line(trim(msg))
-
+                call write_line(trim(warnstr),  color='aqua', ltrim=.false., bold=.true.)
             case (2)    ! Non-Fatal Error -- Code continues
-                call write_line(trim(errstr))
-                call write_line(trim(genstr))
-                call write_line(blankstr)
-                call write_line('Message:')
-                call write_line(trim(msg))
-
-            case (3)    ! Fatal Error -- Code terminates
-                call write_line(trim(killstr))
-                call write_line(trim(genstr))
-                call write_line(blankstr)
-                call write_line('Message:')
-                call write_line(trim(msg))
-
+                call write_line(trim(errstr),   color='aqua', ltrim=.false., bold=.true.)
+            case (3)    ! Fatal Error     -- Code terminates
+                call write_line(trim(killstr),  color='aqua', ltrim=.false., bold=.true.)
+            case (4)    ! Oops Error      -- Code terminates
+                call write_line(trim(oopsstr),  color='aqua', ltrim=.false., bold=.true.)
             case default
                 print*, "Messenger:message -- message code not recognized"
                 stop
         end select
+        call write_line(trim(dashstr))
+
+
+        ! 
+        ! Print USER message
+        !
+        call write_line(trim(blankstr))
+        call write_line('For users:',   color='blue', bold=.true.)
+        call write_line(trim(user_msg), color='blue')
+        call write_line(trim(blankstr))
+
+        !
+        ! Print DEVELOPER message
+        !
+        if (present(dev_msg)) then
+            call write_line('For developers:', color='red', bold=.true.)
+            call write_line(trim(dev_msg),     color='red')
+            call write_line(trim(blankstr))
+        end if
+
+        !
+        ! Print File/Line information
+        !
+        call write_line('Information about the message:', bold=.true.)
+        call write_line(trim(genstr))
         call write_line(blankstr)
 
 
@@ -206,7 +214,7 @@ contains
             ! auxdata pointer is used to point to current auxiliary data variable and then go through the available IO types
             !
             if ( associated(auxdata) ) then
-                call write_line('Case specific info:')
+                call write_line('Information about the message:', bold=.true.)
 
                 select type(auxdata)
                     type is(integer)
@@ -240,15 +248,6 @@ contains
 
 
 
-!        !
-!        ! If msg procedure is present, call that.
-!        !
-!        if ( present(msg_proc) ) then
-!            !call msg_proc()
-!            ierr = msg_proc()
-!        end if
-!
-
 
 
         !
@@ -263,9 +262,10 @@ contains
         ! Select signal action
         !
         select case (sig)
-            case (3)    ! Fatal Error -- Code terminates
+            case (3,4)    ! Fatal Error -- Code terminates
                 stop
                 !error stop
+
 
             case default
 
@@ -297,7 +297,7 @@ contains
     !!  @param[in]  column_width    Optional integer indicating the column width if columns was indicated.
     !!
     !----------------------------------------------------------------------------------------------------------
-    subroutine write_line(a,b,c,d,e,f,g,h,delimiter,columns,column_width,color,ltrim)
+    subroutine write_line(a,b,c,d,e,f,g,h,delimiter,columns,column_width,color,ltrim,bold)
         class(*),           intent(in), target, optional        :: a
         class(*),           intent(in), target, optional        :: b
         class(*),           intent(in), target, optional        :: c
@@ -311,6 +311,7 @@ contains
         integer(ik),        intent(in),         optional        :: column_width
         character(*),       intent(in),         optional        :: color
         logical,            intent(in),         optional        :: ltrim
+        logical,            intent(in),         optional        :: bold
         
 
         class(*), pointer               :: auxdata => null()
@@ -350,7 +351,7 @@ contains
                     !
                     ! Add data to line
                     !
-                    call add_to_line(auxdata,delimiter,columns,column_width,color,ltrim)
+                    call add_to_line(auxdata,delimiter,columns,column_width,color,ltrim,bold)
 
             end if
 
@@ -395,13 +396,14 @@ contains
     !!  @param[in]  column_width    Optional integer indicating the column width if columns was indicated.
     !!
     !--------------------------------------------------------------------------------------------------------------
-    subroutine add_to_line(linedata,delimiter,columns,column_width,color,ltrim)
+    subroutine add_to_line(linedata,delimiter,columns,column_width,color,ltrim,bold)
         class(*),       intent(in)              :: linedata
         character(*),   intent(in), optional    :: delimiter
         logical,        intent(in), optional    :: columns
         integer(ik),    intent(in), optional    :: column_width
         character(*),   intent(in), optional    :: color
         logical,        intent(in), optional    :: ltrim
+        logical,        intent(in), optional    :: bold
 
         character(100)                  :: write_internal
         character(len=:),   allocatable :: temp, temp_a, temp_b
@@ -428,8 +430,12 @@ contains
         !
         ! Set color
         !
-        if ( present(color) ) then
+        if ( present(color) .and. (.not. present(bold)) ) then
             call set_color(color)
+        else if ( (.not. present(color)) .and. present(bold) ) then
+            call set_color('black', bold)
+        else if ( present(color) .and. present(bold) ) then
+            call set_color(color, bold)
         else
             call set_color('none')
         end if
@@ -546,7 +552,6 @@ contains
 
 
         ! Append new text to line
-        !line = line//temp_b
         line = line//color_begin//temp_b//color_end
 
         ! Append delimiter
@@ -636,17 +641,6 @@ contains
             writeline = line(lstart:lend)
 
 
-
-            !
-            ! Colorize output
-            !
-            !writeline = color_begin//writeline//color_end
-
-
-
-
-
-
             !
             ! Write to destination
             !
@@ -709,51 +703,91 @@ contains
 
     !>  Set line color.
     !!
+    !!  ANSI Escape color strings:
+    !!      color_begin string = [setting;setting;settingm
+    !!      color_end   string = [m
+    !!
+    !!  achar(27) adds an escape character so these are recognizes as colorings
+    !!
+    !!  Note: the trailing  'm' in the beginning string. 
+    !!  Note: setting = 1 adds bold
+    !!  Note: setting = 30-36 are colors
+    !!
     !!  @author Nathan A. Wukie
     !!  @date   2/3/2016
     !!
     !!  @param[in]  color   String indicating the color to set
     !!
     !-------------------------------------------------------------------------------------------
-    subroutine set_color(color)
-        character(*),   intent(in)  :: color
+    subroutine set_color(color,bold)
+        character(*),      intent(in)  :: color
+        logical, optional, intent(in)   :: bold
 
         color_end = achar(27)//'[m'
 
+        color_begin = achar(27)//'['
+
         select case (color)
             case ('black')
-                color_begin = achar(27)//'[30m'
+!                color_begin = achar(27)//'[30m'
+                color_begin = color_begin//'30'
 
             case ('red')
-                color_begin = achar(27)//'[31m'
+!                color_begin = achar(27)//'[31m'
+                color_begin = color_begin//'31'
 
             case ('green')
-                color_begin = achar(27)//'[32m'
+!                color_begin = achar(27)//'[32m'
+                color_begin = color_begin//'32'
 
             case ('yellow')
-                color_begin = achar(27)//'[33m'
+!                color_begin = achar(27)//'[33m'
+                color_begin = color_begin//'33'
 
             case ('blue')
-                color_begin = achar(27)//'[34m'
+!                color_begin = achar(27)//'[34m'
+                color_begin = color_begin//'34'
 
             case ('purple')
-                color_begin = achar(27)//'[35m'
+!                color_begin = achar(27)//'[35m'
+                color_begin = color_begin//'35'
 
             case ('aqua')
-                color_begin = achar(27)//'[36m'
+!                color_begin = achar(27)//'[36m'
+                color_begin = color_begin//'36'
 
             case ('pink')
-                color_begin = achar(27)//'[95m'
+!                color_begin = achar(27)//'[95m'
+                color_begin = color_begin//'95'
 
             case ('none')
-                color_begin = ''
-                color_end   = ''
+!                color_begin = ''
+!                color_end   = ''
+                color_begin = color_begin//'30'
 
             case default
-                color_begin = achar(27)//'[30m'
+!                color_begin = achar(27)//'[30m'
+                color_begin = color_begin//'30'
                 call message(__FILE__,__LINE__,1, "set_color: unrecognized color string.",color) ! send warning
-
         end select
+
+
+
+        !
+        ! Add bold if present
+        !
+        if (present(bold)) then
+            if (bold) then
+                color_begin = color_begin//";1"
+            end if
+        end if
+
+
+
+        !
+        ! Terminate color_begin
+        !
+        color_begin = color_begin//'m'
 
     end subroutine set_color
     !******************************************************************************************

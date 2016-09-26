@@ -14,6 +14,8 @@ module mod_chidg_edit
     use h5lt
 
     use type_chidg,                         only: chidg_t
+    use mod_hdf_utilities,                  only: check_file_storage_version_hdf
+
     use mod_chidg_edit_domaininfo,          only: chidg_edit_domaininfo
     use mod_chidg_edit_boundaryconditions,  only: chidg_edit_boundaryconditions
     use mod_chidg_edit_matrixsolver,        only: chidg_edit_matrixsolver
@@ -112,8 +114,10 @@ contains
         if (ierr /= 0) call chidg_signal_one(FATAL,"chidg_edit: Error opening HDF5 file for editing.",filename)
 
 
-
-
+        !
+        ! Check file format version
+        !
+        call check_file_storage_version_hdf(fid)
 
 
 

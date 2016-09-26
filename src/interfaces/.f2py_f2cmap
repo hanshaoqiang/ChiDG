@@ -1,1 +1,2 @@
-{'real': {'': 'float', '8': 'double', 'rk': 'double'}}
+{'integer': {'': 'int', 'ik': 'int'},
+ 'real': {'': 'float', '8': 'double', 'rk': 'double'}}

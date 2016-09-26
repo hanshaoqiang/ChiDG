@@ -7,9 +7,14 @@
 module mod_version
     implicit none
 
-    ! HDF5 storage format
-    integer, parameter :: STORAGE_FORMAT_MAJOR = 0
-    integer, parameter :: STORAGE_FORMAT_MINOR = 1
+
+    !
+    ! ChiDG Version
+    !
+    integer, parameter :: ChiDG_VERSION_MAJOR = 0
+    integer, parameter :: ChiDG_VERSION_MINOR = 1
+
+    
 
 
 

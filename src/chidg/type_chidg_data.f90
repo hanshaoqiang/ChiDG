@@ -17,7 +17,6 @@ module type_chidg_data
 
     ! Factory methods
     use mod_equations,                  only: create_equationset
-    use mod_bc,                         only: create_bc
 
     ! Classes
     use type_bc,                        only: bc_t

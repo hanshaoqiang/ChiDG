@@ -12,9 +12,7 @@ module type_bcwrapper
     !!
     !-------------------------------------------------------------
     type, public :: bcwrapper_t
-
         class(bc_t), allocatable    :: bc
-
     end type bcwrapper_t
     !*************************************************************
 

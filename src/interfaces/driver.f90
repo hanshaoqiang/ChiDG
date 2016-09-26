@@ -13,9 +13,9 @@
 program driver
 #include <messenger.h>
     use mod_kinds,              only: rk, ik
-    use mod_constants,          only: ONE, TWO, ZERO
+    use mod_constants,          only: ONE, TWO, ZERO, HALF
     use type_chidg,             only: chidg_t
-    use mod_grid_operators,     only: initialize_variable
+!    use mod_grid_operators,     only: initialize_variable
     use type_dict,              only: dict_t
     use type_function,          only: function_t
     use mod_function,           only: create_function
@@ -39,7 +39,7 @@ program driver
     implicit none
     type(chidg_t)                       :: chidg
     type(dict_t)                        :: toptions, noptions, loptions, poptions
-    class(function_t),  allocatable     :: constant, monopole
+    class(function_t),  allocatable     :: constant, monopole, blockage
 
     integer(ik)                         :: narg
     character(len=1024)                 :: chidg_action, filename, file_a, file_b
@@ -56,26 +56,11 @@ program driver
     ! Execute ChiDG calculation
     !
     if ( narg == 0 ) then
-
-
         !
         ! Initialize ChiDG environment
         !
         call chidg%init('env')
         call chidg%init('io')
-
-
-        !
-        ! Read grid data from file
-        !
-        call chidg%read_grid(gridfile, spacedim)
-
-
-        !
-        ! Read boundary conditions
-        !
-        call chidg%read_boundaryconditions(gridfile)
-
 
 
         !
@@ -108,6 +93,19 @@ program driver
         call chidg%set('preconditioner',   preconditioner,   poptions)
 
 
+
+
+
+
+        !
+        ! Read grid data from file
+        !
+        call chidg%read_grid(gridfile, spacedim)
+        call chidg%read_boundaryconditions(gridfile)
+
+
+
+
         !
         ! Initialize solution data storage
         !
@@ -126,45 +124,31 @@ program driver
 
             ! rho
             call constant%set_option('val',1.20_rk)
-            call initialize_variable(chidg%data,1,constant)
+            !call initialize_variable(chidg%data,1,constant)
+            call chidg%data%sdata%q%project(chidg%data%mesh,constant,1)
 
             ! rho_u
             call constant%set_option('val',50._rk)
-            call initialize_variable(chidg%data,2,constant)
+            !call initialize_variable(chidg%data,2,constant)
+            call chidg%data%sdata%q%project(chidg%data%mesh,constant,2)
 
             ! rho_v
             call constant%set_option('val',0._rk)
-            call initialize_variable(chidg%data,3,constant)
+            !call initialize_variable(chidg%data,3,constant)
+            call chidg%data%sdata%q%project(chidg%data%mesh,constant,3)
 
             ! rho_w
             call constant%set_option('val',0._rk)
-            call initialize_variable(chidg%data,4,constant)
+            !call initialize_variable(chidg%data,4,constant)
+            call chidg%data%sdata%q%project(chidg%data%mesh,constant,4)
 
             ! rho_E
             call constant%set_option('val',230000._rk)
-            call initialize_variable(chidg%data,5,constant)
+            !call initialize_variable(chidg%data,5,constant)
+            call chidg%data%sdata%q%project(chidg%data%mesh,constant,5)
 
 
-!            ! rho
-!            call constant%set_option('val',0._rk)
-!            call initialize_variable(chidg%data,6,constant)
-!
-!            ! rho_u
-!            call constant%set_option('val',0._rk)
-!            call initialize_variable(chidg%data,7,constant)
-!
-!            ! rho_v
-!            call constant%set_option('val',0._rk)
-!            call initialize_variable(chidg%data,8,constant)
-!
-!            ! rho_w
-!            call constant%set_option('val',0._rk)
-!            call initialize_variable(chidg%data,9,constant)
-!
-!            ! rho_E
-!            call constant%set_option('val',0._rk)
-!            call initialize_variable(chidg%data,10,constant)
-!
+
 
         else
 

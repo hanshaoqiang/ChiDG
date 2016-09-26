@@ -3,7 +3,8 @@ module mod_chidg_edit_boundaryconditions
     use mod_kinds,      only: rk, ik, rdouble
     use mod_constants,  only: NFACES, XI_MIN, XI_MAX, ETA_MIN, ETA_MAX, ZETA_MIN, ZETA_MAX
     use type_bc,        only: bc_t
-    use mod_bc,         only: create_bc, list_bcs, registered_bcs
+    !use mod_bc,         only: create_bc, list_bcs, registered_bcs
+    use mod_bc,         only: bc_factory
     use type_function,  only: function_t
     use mod_function,   only: create_function
     use hdf5
@@ -396,7 +397,7 @@ contains
 
         integer(HID_T)                      :: bcface
         character(len=10)                   :: faces(NFACES)
-        integer(ik)                         :: ierr, int_action, bcindex
+        integer(ik)                         :: ierr, int_action, bcindex, ibc, nbcs
         character(len=1024),    allocatable :: bcnames(:)
         character(len=1024)                 :: dname
         character(len=:),       allocatable :: command, dname_trim
@@ -491,7 +492,12 @@ contains
                         dname_trim = trim(adjustl(dname)) 
                         call print_boundaryconditions_domain_face(dname_trim(3:), trim(adjustl(faces(iface))))
 
-                        if (print_bcs) call list_bcs()
+                        if (print_bcs) then
+                            nbcs = bc_factory%size()
+                            do ibc = 1,nbcs
+                                call write_line(bc_factory%get_name(ibc))
+                            end do
+                        end if
                         if (.not. valid_bc) call write_line("Boundary condition string", bc_string, " was not found in the list of registered boundary conditions.", color='blue')
 
 
@@ -513,7 +519,7 @@ contains
                             !
                             ! Check if boundary condition name is valid
                             !
-                            bcindex = registered_bcs%index_by_name(trim(bc_string))
+                            bcindex = bc_factory%registered_bcs%index_by_name(trim(bc_string))
                             valid_bc = (bcindex /= 0) .or. (trim(bc_string) == 'empty')
                         
                             !
@@ -678,7 +684,8 @@ contains
             !
             ! Create an instance of the specified boundary condition to query its options
             !
-            call create_bc(bcstring,bc)
+            !call create_bc(bcstring,bc)
+            call bc_factory%create(bcstring,bc)
         
 
             !

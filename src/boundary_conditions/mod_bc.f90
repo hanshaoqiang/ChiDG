@@ -50,11 +50,41 @@ module mod_bc
     implicit none
 
 
-    !
-    ! Global vector of registered boundary conditions
-    !
-    type(bcvector_t)    :: registered_bcs
-    logical             :: initialized = .false.
+
+
+    !>
+    !!
+    !!  @author Nathan A. Wukie 
+    !!  @date   9/5/2016
+    !!
+    !!
+    !--------------------------------------------------------------------------------
+    type, public :: bc_factory_t
+
+        type(bcvector_t)    :: registered_bcs
+
+        logical             :: initialized_ = .false.
+
+    contains
+        
+        procedure   :: init
+        procedure   :: initialized
+        procedure   :: check_initialized
+
+        procedure   :: create
+
+        procedure   :: size
+        procedure   :: get_name
+
+    end type bc_factory_t
+    !********************************************************************************
+
+
+
+
+    type(bc_factory_t)  :: bc_factory
+
+
 
 contains
 
@@ -71,7 +101,8 @@ contains
     !!
     !!
     !--------------------------------------------------------------------------------------------
-    subroutine register_bcs()
+    subroutine init(self)
+        class(bc_factory_t),    intent(inout)   :: self
         integer :: nbcs, ibc
 
         !
@@ -108,44 +139,44 @@ contains
 
         type(kirchoff_t)                        :: KIRCHOFF
 
-        if ( .not. initialized ) then
+        if ( .not. self%initialized() ) then
             !
             ! Register in global vector
             !
-            call registered_bcs%push_back(PERIODIC)
-            call registered_bcs%push_back(LINEARADVECTION_EXTRAPOLATE)
+            call self%registered_bcs%push_back(PERIODIC)
+            call self%registered_bcs%push_back(LINEARADVECTION_EXTRAPOLATE)
 
 
-            call registered_bcs%push_back(EULER_WALL)
-            call registered_bcs%push_back(EULER_TOTALINLET)
-            call registered_bcs%push_back(EULER_TOTALINLET_CHARCTERISTIC)
-            call registered_bcs%push_back(EULER_PRESSUREOUTLET)
-            call registered_bcs%push_back(EULER_EXTRAPOLATE)
-            call registered_bcs%push_back(EULER_GILES_OUTLET)
-            call registered_bcs%push_back(EULER_GILES_OUTLET_2D_A)
-            call registered_bcs%push_back(EULER_GILES_OUTLET_2D_B)
+            call self%registered_bcs%push_back(EULER_WALL)
+            call self%registered_bcs%push_back(EULER_TOTALINLET)
+            call self%registered_bcs%push_back(EULER_TOTALINLET_CHARCTERISTIC)
+            call self%registered_bcs%push_back(EULER_PRESSUREOUTLET)
+            call self%registered_bcs%push_back(EULER_EXTRAPOLATE)
+            call self%registered_bcs%push_back(EULER_GILES_OUTLET)
+            call self%registered_bcs%push_back(EULER_GILES_OUTLET_2D_A)
+            call self%registered_bcs%push_back(EULER_GILES_OUTLET_2D_B)
 
 
-            call registered_bcs%push_back(LINEULER_INLET)
-            call registered_bcs%push_back(LINEULER_OUTLET)
-            call registered_bcs%push_back(LINEULER_EXTRAPOLATE)
-            call registered_bcs%push_back(LINEULER_WALL)
+            call self%registered_bcs%push_back(LINEULER_INLET)
+            call self%registered_bcs%push_back(LINEULER_OUTLET)
+            call self%registered_bcs%push_back(LINEULER_EXTRAPOLATE)
+            call self%registered_bcs%push_back(LINEULER_WALL)
 
 
-            call registered_bcs%push_back(PRIMLINEULER_INLET)
-            call registered_bcs%push_back(PRIMLINEULER_OUTLET)
-            call registered_bcs%push_back(PRIMLINEULER_EXTRAPOLATE)
-            call registered_bcs%push_back(PRIMLINEULER_WALL)
+            call self%registered_bcs%push_back(PRIMLINEULER_INLET)
+            call self%registered_bcs%push_back(PRIMLINEULER_OUTLET)
+            call self%registered_bcs%push_back(PRIMLINEULER_EXTRAPOLATE)
+            call self%registered_bcs%push_back(PRIMLINEULER_WALL)
 
 
-            call registered_bcs%push_back(PRIMLINEULERAXI_INLET)
-            call registered_bcs%push_back(PRIMLINEULERAXI_OUTLET)
-            call registered_bcs%push_back(PRIMLINEULERAXI_EXTRAPOLATE)
-            call registered_bcs%push_back(PRIMLINEULERAXI_WALL)
-            call registered_bcs%push_back(PRIMLINEULERAXI_AXI)
+            call self%registered_bcs%push_back(PRIMLINEULERAXI_INLET)
+            call self%registered_bcs%push_back(PRIMLINEULERAXI_OUTLET)
+            call self%registered_bcs%push_back(PRIMLINEULERAXI_EXTRAPOLATE)
+            call self%registered_bcs%push_back(PRIMLINEULERAXI_WALL)
+            call self%registered_bcs%push_back(PRIMLINEULERAXI_AXI)
 
 
-            call registered_bcs%push_back(KIRCHOFF)
+            call self%registered_bcs%push_back(KIRCHOFF)
 
 
 
@@ -153,21 +184,19 @@ contains
             !
             ! Initialize each boundary condition in set. Doesn't need modified.
             !
-            nbcs = registered_bcs%size()
+            nbcs = self%registered_bcs%size()
             do ibc = 1,nbcs
-
-                call registered_bcs%data(ibc)%bc%add_options()
-
+                call self%registered_bcs%data(ibc)%bc%add_options()
             end do
 
             !
             ! Confirm initialization
             !
-            initialized = .true.
+            self%initialized_ = .true.
 
         end if
 
-    end subroutine register_bcs
+    end subroutine init
     !********************************************************************************************
 
 
@@ -187,12 +216,17 @@ contains
     !!  @param[in]      string  Character string used to select the appropriate boundary condition
     !!  @param[inout]   bc      Allocatable boundary condition
     !!
-    !----------------------------------------------------------------------------------------------------
-    subroutine create_bc(bcstring,bc)
+    !-----------------------------------------------------------------------------------------------
+    subroutine create(self,bcstring,bc)
+        class(bc_factory_t),            intent(inout)   :: self
         character(*),                   intent(in)      :: bcstring
         class(bc_t),    allocatable,    intent(inout)   :: bc
 
         integer(ik) :: ierr, bcindex
+
+
+        ! Make sure the object was initialized
+        call self%check_initialized()
 
 
         if ( allocated(bc) ) then
@@ -204,7 +238,7 @@ contains
         !
         ! Find equation set in 'registered_bcs' vector
         !
-        bcindex = registered_bcs%index_by_name(trim(bcstring))
+        bcindex = self%registered_bcs%index_by_name(trim(bcstring))
 
 
 
@@ -218,8 +252,8 @@ contains
         !
         ! Allocate conrete bc_t instance
         !
-        allocate(bc, source=registered_bcs%data(bcindex)%bc, stat=ierr)
-        if (ierr /= 0) call chidg_signal(FATAL,"create_bc: error allocating boundary condition from global vector.")
+        allocate(bc, source=self%registered_bcs%data(bcindex)%bc, stat=ierr)
+        if (ierr /= 0) call chidg_signal(FATAL,"create: error allocating boundary condition from global vector.")
 
 
 
@@ -230,8 +264,8 @@ contains
 
 
 
-    end subroutine create_bc
-    !******************************************************************************************************
+    end subroutine create
+    !******************************************************************************************
 
 
 
@@ -239,29 +273,60 @@ contains
 
 
 
-    !>  This is really just a utilitity for 'chidg edit' to dynamically list the avalable 
-    !!  boundary conditions.
+
+
+
+    !>  Return the number of boundary conditions registered in the factory
+    !!
+    !!  @author Nathan A. Wukie 
+    !!  @date   9/5/2016
+    !!
+    !!
+    !------------------------------------------------------------------------------------------
+    function size(self) result(size_)
+        class(bc_factory_t),    intent(in)  :: self
+
+        integer(ik) :: size_
+
+        ! Make sure the object was initialized
+        call self%check_initialized()
+
+        size_ = self%registered_bcs%size()
+
+    end function size
+    !******************************************************************************************
+
+
+
+
+
+
+
+
+
+
+
+
+
+    !>  Return the name of the i'th boundary condition in the factory
     !!
     !!  @author Nathan A. Wukie
     !!  @date   2/8/2016
     !!
-    !-----------------------------------------------------------------------------------------------------
-    subroutine list_bcs()
-        integer                         :: nbcs, ibc
+    !------------------------------------------------------------------------------------------
+    function get_name(self,ibc) result(bcname)
+        class(bc_factory_t),    intent(in)  :: self
+        integer(ik)                         :: ibc
+
         character(len=:),   allocatable :: bcname
 
-        nbcs = registered_bcs%size()
+        ! Make sure the object was initialized
+        call self%check_initialized()
 
+        bcname = self%registered_bcs%data(ibc)%bc%get_name()
 
-        do ibc = 1,nbcs
-
-            bcname = registered_bcs%data(ibc)%bc%get_name()
-            call write_line(trim(bcname))
-
-        end do ! ieqn
-
-    end subroutine list_bcs
-    !*****************************************************************************************************
+    end function get_name
+    !******************************************************************************************
 
 
 
@@ -270,15 +335,45 @@ contains
 
 
 
+    !>  Return the initialization status of the factory
+    !!
+    !!  @author Nathan A. Wukie
+    !!  @date   9/6/2016
+    !!
+    !!
+    !------------------------------------------------------------------------------------------
+    function initialized(self) result(initialized_)
+        class(bc_factory_t),    intent(in)  :: self
+
+        logical :: initialized_
+
+        initialized_ = self%initialized_
+
+    end function initialized
+    !******************************************************************************************
 
 
 
 
 
 
+    !>  Check the initialization status of the object and handle any action or reporting
+    !!
+    !!  @author Nathan A. Wukie
+    !!  @date   9/5/2016
+    !!
+    !!
+    !-------------------------------------------------------------------------------------------
+    subroutine check_initialized(self)
+        class(bc_factory_t),    intent(in)  :: self
 
 
+        if (.not. self%initialized()) call chidg_signal(FATAL,"bc_factory: Factory was not initialized so it also &
+                                                               won't have any components to create. Make sure to  &
+                                                               initialize the ChiDG environment. Try calling chidg%init('env')")
 
+    end subroutine check_initialized
+    !*******************************************************************************************
 
 
 

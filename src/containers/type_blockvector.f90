@@ -24,6 +24,7 @@ module type_blockvector
     contains
         ! Initializers
         generic,   public   :: init => init_vector          !< Initialize local vector
+
         procedure, private  :: init_vector
 
         procedure, public   :: distribute                   !< Given a full-vector representation, distribute it to the denseblock format
@@ -101,11 +102,12 @@ contains
     !!  @param[in]  mesh    mesh_t instance containing initialized elements and faces
     !!
     !---------------------------------------------------------------------------------------------------------------
-    subroutine init_vector(self,mesh)
-        class(blockvector_t), intent(inout), target  :: self
-        class(mesh_t),        intent(in)             :: mesh
+    subroutine init_vector(self,mesh,neqns)
+        class(blockvector_t),   intent(inout), target   :: self
+        class(mesh_t),          intent(in)              :: mesh
+        integer(ik),            intent(in)              :: neqns
 
-        integer(ik)                     :: nelem, nblk, ierr, ielem, iblk, size1d, parent, nterms, neqns
+        integer(ik)                     :: nelem, nblk, ierr, ielem, iblk, size1d, parent, nterms
         logical                         :: new_elements
         type(densevector_t), pointer    :: temp(:)
 
@@ -145,7 +147,7 @@ contains
         do ielem = 1,mesh%nelem
             parent = mesh%elems(ielem)%ielem
             nterms = mesh%elems(ielem)%nterms_s
-            neqns  = mesh%elems(ielem)%neqns
+            !neqns  = mesh%elems(ielem)%neqns ! Doesn't need set since it is being passed in now.
 
             ! Call densevector initialization routine
             call self%lvecs(ielem)%init(nterms,neqns,parent)

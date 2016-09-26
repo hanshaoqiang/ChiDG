@@ -164,7 +164,40 @@ contains
         !
         ! Compute number of terms in polynomial expansions
         !
-        nterms_sol1d = (solution_order)
+!        nterms_sol1d = (solution_order)
+!
+!        if ( spacedim == THREE_DIM ) then
+!            nterms_s = nterms_sol1d * nterms_sol1d * nterms_sol1d
+!        else if ( spacedim == TWO_DIM ) then
+!            nterms_s = nterms_sol1d * nterms_sol1d
+!        else
+!            call chidg_signal(FATAL,"mod_io: Invalid spacedim")
+!        end if
+        call io_compute_nterms(solution_order)
+
+
+
+    end subroutine read_input
+    !*******************************************************************************************************
+
+
+
+
+
+
+
+    !>
+    !!
+    !!
+    !!
+    !!
+    !!
+    !-------------------------------------------------------------------------------------------------------
+    subroutine io_compute_nterms(order)
+        integer(ik),    intent(in)  :: order
+
+
+        nterms_sol1d = order
 
         if ( spacedim == THREE_DIM ) then
             nterms_s = nterms_sol1d * nterms_sol1d * nterms_sol1d
@@ -174,10 +207,14 @@ contains
             call chidg_signal(FATAL,"mod_io: Invalid spacedim")
         end if
 
+    end subroutine io_compute_nterms
+    !********************************************************************************************************
 
 
-    end subroutine read_input
-    !*******************************************************************************************************
+
+
+
+
 
 
 

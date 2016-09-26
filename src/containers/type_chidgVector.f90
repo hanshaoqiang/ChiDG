@@ -1,8 +1,10 @@
 module type_chidgVector
 #include <messenger.h>
-    use mod_kinds,                  only: rk, ik
-    use mod_constants,              only: ZERO, TWO
-    use type_mesh,                  only: mesh_t
+    use mod_kinds,          only: rk, ik
+    use mod_constants,      only: ZERO, TWO
+    use type_mesh,          only: mesh_t
+    use type_function,      only: function_t
+    use mod_project,        only: project_function_xyz
     use type_blockvector
     implicit none
 
@@ -23,9 +25,12 @@ module type_chidgVector
 
         type(blockvector_t), allocatable    :: dom(:)
 
+        logical :: initialized = .false.
+
     contains
         ! Initializers
         generic, public     :: init => initialize
+
         procedure, private  :: initialize
 
         ! Modifiers
@@ -36,6 +41,10 @@ module type_chidgVector
         procedure, public   :: dump
         !procedure, public   :: nentries
         !procedure, public   :: ndomains
+
+
+        procedure, public   :: project
+
 
         !final               :: destructor
 
@@ -106,11 +115,13 @@ contains
     !!  @param[in]  mesh    Array of mesh_t instances used to initialize each blockvector_t subcomponent.
     !!
     !----------------------------------------------------------------------------------------------------
-    subroutine initialize(self,mesh)
+    subroutine initialize(self,mesh,init_type)
         class(chidgVector_t),   intent(inout)   :: self
         type(mesh_t),           intent(in)      :: mesh(:)
+        character(len=*),       intent(in)      :: init_type
 
-        integer(ik) :: ierr, ndomains, idom
+        integer(ik) :: ierr, ndomains, idom, neqns
+        character(len=:), allocatable   :: user_msg, dev_msg
 
 
         !
@@ -126,16 +137,37 @@ contains
         ! Call initialization procedure for each blockvector_t
         !
         do idom = 1,ndomains
-            call self%dom(idom)%init(mesh(idom))
+
+            !
+            ! Set the number of equations to initialize in the vector based in the initialization type
+            !
+            select case (init_type)
+                case('equations')
+                    neqns = mesh(idom)%neqns
+                case('parameter')
+                    neqns = 1
+                case default
+                    user_msg = "A chidgVector was trying to determine if it was supposed to initialize a set of equations &
+                                or a single parameter. Unfortunately, the string that was passed in didn't correnspond to either &
+                                of those cases. Valid values for init_type are 'equations' and 'parameter'"
+                    dev_msg = "chidgVector%initialize: bad value for init_type"
+                    call chidg_signal_two(OOPS, user_msg, trim(init_type), dev_msg=dev_msg)
+            end select
+
+
+            !
+            ! Call blockvector initialization
+            !
+            call self%dom(idom)%init(mesh(idom),neqns)
+
         end do
 
 
+        ! Set initialization status
+        self%initialized = .true.
 
     end subroutine initialize
     !****************************************************************************************************
-
-
-
 
 
 
@@ -217,11 +249,6 @@ contains
 
 
 
-
-
-
-
-
     !> Dump contents of the vector
     !!
     !!  @author Nathan A. Wukie
@@ -250,6 +277,97 @@ contains
 
     end subroutine dump
     !*****************************************************************************************************
+
+
+
+
+
+
+
+
+
+
+    !>  Project functions to element solution variables
+    !!
+    !!  @author Nathan A. Wukie
+    !!  @date   2/1/2016
+    !!  @note   Moved from mod_grid_operators
+    !!
+    !!
+    !!  @param[in]  ivar    Integer index of the variable being initialized
+    !!  @param[in]  fcn     Function being projected to the solution
+    !!
+    !--------------------------------------------------------------------------------------------------------
+    subroutine project(self,mesh,fcn,ivar)
+        class(chidgVector_t),   intent(inout)   :: self
+        type(mesh_t),           intent(in)      :: mesh(:)
+        class(function_t),      intent(inout)   :: fcn
+        integer(ik),            intent(in)      :: ivar
+
+        integer(ik)                         :: ielem, ierr, idom, nterms, spacedim
+        real(rk),           allocatable     :: fmodes(:)
+        character(len=:),   allocatable     :: user_msg
+
+        ! Check the vector has been initialized
+        user_msg = "chidgVector%project: The vector was not initialized before the project routine was called. &
+                    Make sure to call chidgVector%init before calling the projection routine"
+        if (.not. self%initialized) call chidg_signal(FATAL,user_msg)
+
+
+        !
+        ! Loop through elements in mesh and call function projection
+        !
+        do idom = 1,size(mesh)
+
+            ! Check that variable index 'ivar' is valid
+            if (ivar > self%dom(idom)%lvecs(1)%nvars() ) call chidg_signal(FATAL,'initialize_variable: variable index ivar exceeds the number of equations')
+
+            do ielem = 1,mesh(idom)%nelem
+
+                    !
+                    ! Get spacedim
+                    !
+                    spacedim = mesh(idom)%elems(ielem)%spacedim
+
+                    !
+                    ! Initial array allocation
+                    !
+                    nterms = self%dom(idom)%lvecs(ielem)%nterms()
+                    if (.not. allocated(fmodes)) allocate(fmodes(nterms))
+
+
+                    !
+                    ! Reallocate mode storage if necessary. For example, if the order of the expansion was changed
+                    !
+                    if (size(fmodes) /= nterms) then
+                        if (allocated(fmodes)) deallocate(fmodes)
+                        allocate(fmodes(nterms), stat=ierr)
+                        if (ierr /= 0) call AllocationError
+                    end if
+
+
+                    if (.not. allocated(fmodes)) call chidg_signal(FATAL,"initialize_variable: fmodes not allocated")
+
+
+                    !
+                    ! Call function projection
+                    !
+                    call project_function_xyz(fcn,spacedim,mesh(idom)%elems(ielem)%nterms_s,mesh(idom)%elems(ielem)%coords,fmodes)
+
+
+                    !
+                    ! Store the projected modes to the solution expansion
+                    !
+                    call self%dom(idom)%lvecs(ielem)%setvar(ivar,fmodes)
+
+            end do ! ielem
+
+        end do ! idomain
+
+    end subroutine project
+    !**************************************************************************************************************
+
+
 
 
 

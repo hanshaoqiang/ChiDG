@@ -15,10 +15,6 @@ module type_fgmres
         
 
 
-
-
-
-
     !> Generalized Minimum Residual linear system solver
     !!
     !!  @author Nathan A. Wukie

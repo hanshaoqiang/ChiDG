@@ -42,6 +42,8 @@ contains
         class(time_scheme_t), allocatable,  intent(inout)   :: instance
         type(dict_t), optional,             intent(inout)   :: options
 
+        character(len=:), allocatable   :: user_msg, dev_msg
+
         select case (trim(time_string))
 
             case ('steady','Steady')
@@ -49,10 +51,12 @@ contains
 
 
             case default
-                call chidg_signal(FATAL,'create_time_scheme -- solver string not recognized')
+                user_msg = "We can't seem to find a time integrator that matches the input string. &
+                            Maybe check that the time integrator string in the input file or driver &
+                            script is valid."
+                dev_msg = "Check that the time integrator is registered properly in create_time_scheme."
+                call chidg_signal_two(OOPS, user_msg, trim(time_string), dev_msg=dev_msg)
         end select
-
-
 
 
 

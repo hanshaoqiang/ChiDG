@@ -2,10 +2,11 @@ module type_chidg
 #include <messenger.h>
     use mod_constants,          only: NFACES
     use mod_equations,          only: register_equations
-    use mod_bc,                 only: register_bcs
+    !use mod_bc,                 only: register_bcs
+    use mod_bc,                 only: bc_factory
     use mod_function,           only: register_functions
     use mod_grid,               only: initialize_grid
-    use mod_io,                 only: read_input
+    use mod_io,                 only: read_input, io_compute_nterms
     use mod_string_utilities,   only: get_file_extension
 
     use type_chidg_data,        only: chidg_data_t
@@ -15,6 +16,7 @@ module type_chidg
     use type_preconditioner,    only: preconditioner_t
     use type_meshdata,          only: meshdata_t
     use type_bcdata,            only: bcdata_t
+    use type_bcwrapper,         only: bcwrapper_t
     use type_dict,              only: dict_t
 
     use mod_time_scheme,        only: create_time_scheme
@@ -26,7 +28,6 @@ module type_chidg
                                       compute_chimera_interpolators
 
     use mod_hdfio,              only: read_grid_hdf, read_boundaryconditions_hdf, read_solution_hdf, write_solution_hdf
-
     implicit none
 
 
@@ -62,6 +63,7 @@ module type_chidg
         procedure   :: report
 
         ! IO procedures
+!        procedure   :: set_accuracy
         procedure   :: read_grid
         procedure   :: read_boundaryconditions
         procedure   :: read_solution
@@ -71,10 +73,43 @@ module type_chidg
         procedure   :: initialize_solution_domains
         procedure   :: initialize_solution_solver
 
+
+        ! GUI Functions
+        procedure   :: accept
+
     end type chidg_t
     !*********************************************************************************************************
 
 
+
+
+    !>
+    !!
+    !!  @author Nathan A. Wukie
+    !!  @date   9/3/2016
+    !!
+    !---------------------------------------------------------------------------------------------------------
+    type, public, abstract :: chidg_visitor_t
+
+
+    contains
+
+        procedure(visit_interface), deferred :: visit
+
+    end type chidg_visitor_t
+    !*********************************************************************************************************
+
+    !---------------------------------------------------------------------------------------------------------
+    abstract interface
+        subroutine visit_interface(self,chidg)
+            import chidg_visitor_t
+            import chidg_t
+
+            class(chidg_visitor_t), intent(inout)   :: self
+            type(chidg_t),          intent(inout)   :: chidg
+        end subroutine 
+    end interface
+    !*********************************************************************************************************
 
 contains
 
@@ -90,9 +125,9 @@ contains
     !!  @param[in]  level   Initialization level specification. 'env', 'io', or 'finalize'
     !!
     !--------------------------------------------------------------------------------------------
-    subroutine init(self,level)
-        class(chidg_t),  intent(inout)   :: self
-        character(*),    intent(in)      :: level
+    subroutine init(self, level)
+        class(chidg_t), intent(inout)           :: self
+        character(*),   intent(in)              :: level
 
 
         ! Valid strings are:
@@ -109,7 +144,8 @@ contains
             !
             call register_functions()
             call register_equations()
-            call register_bcs()
+            !call register_bcs()
+            call bc_factory%init()
 
             call initialize_grid()
             self%envInitialized = .true.
@@ -134,6 +170,19 @@ contains
                 call read_input()
 
 
+
+!            !
+!            ! Set solution accuracy
+!            !
+!            case ('accuracy')
+!                if (present(param)) then
+!                    call io_compute_nterms(param)
+!                else
+!                    call chidg_signal(OOPS,"chidg%init('accuracy', order) was called as chidg%init('accuracy'). Try and add the desired order of accuracy to the call.")
+!                end if
+!
+
+
             !
             ! Initialize chimera
             !
@@ -151,10 +200,10 @@ contains
                 !
                 ! Test chidg necessary components have been allocated
                 !
-                if (.not. allocated(self%time_scheme))      call chidg_signal(FATAL,"chidg%time_scheme component was not allocated")
-                if (.not. allocated(self%nonlinear_solver)) call chidg_signal(FATAL,"chidg%nonlinear_solver component was not allocated")
-                if (.not. allocated(self%linear_solver))    call chidg_signal(FATAL,"chidg%linearsolver component was not allocated")
-                if (.not. allocated(self%preconditioner))   call chidg_signal(FATAL,"chidg%preconditioner component was not allocated")
+                if (.not. allocated(self%time_scheme))      call chidg_signal(OOPS,"The time_scheme algorithm was not set. Try calling chidg%set('time_scheme', 'algorithm', toptions) first.")
+                if (.not. allocated(self%nonlinear_solver)) call chidg_signal(OOPS,"The nonlinear_solver algorithm was not set. Try calling chidg%set('nonlinear_solver, 'algorithm', noptions) first.")
+                if (.not. allocated(self%linear_solver))    call chidg_signal(OOPS,"The linear_solver algorithm was not set. Try calling chidg%set('linear_solver, 'algorithm', loptions) first.")
+                if (.not. allocated(self%preconditioner))   call chidg_signal(OOPS,"The preconditioner algorithm was not set. Try calling chidg%set('preconditioner', 'algorith,', poptions) first.")
 
 
                 call self%time_scheme%init(self%data)
@@ -198,7 +247,6 @@ contains
         class(chidg_t),         intent(inout)   :: self
         character(*),           intent(in)      :: selector
         character(*),           intent(in)      :: selection
-        !type(dict_t), optional, intent(inout)   :: options 
         type(dict_t),           intent(inout)   :: options 
 
         integer(ik) :: ierr
@@ -264,6 +312,31 @@ contains
 
     end subroutine set
     !********************************************************************************************************
+
+
+
+
+
+
+
+!    !>
+!    !!
+!    !!
+!    !!
+!    !!
+!    !!
+!    !--------------------------------------------------------------------------------------------------------
+!    subroutine set_accuracy(self, order)
+!        class(chidg_t), intent(inout)   :: self
+!        integer(ik),    intent(in)      :: order
+!
+!        call io_compute_nterms(order)
+!
+!    end subroutine set_accuracy
+!    !*********************************************************************************************************
+!
+
+
 
 
 
@@ -664,6 +737,24 @@ contains
 
 
 
+
+
+
+    !>
+    !!
+    !!  @author Nathan A. Wukie
+    !!  @date   9/3/2016
+    !!
+    !!
+    !------------------------------------------------------------------------------------------------------------
+    subroutine accept(self,visitor)
+        class(chidg_t),         intent(inout)   :: self
+        class(chidg_visitor_t), intent(inout)   :: visitor
+
+        call visitor%visit(self)
+
+    end subroutine accept
+    !************************************************************************************************************
 
 
 
