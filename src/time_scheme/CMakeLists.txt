@@ -7,6 +7,8 @@ add_lib_sources(
                 mod_time_scheme.f90
                 type_timer.f90
                 steady.f90
+                backward_euler.f90
+                forward_euler.f90
                 )
 
                 

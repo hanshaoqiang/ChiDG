@@ -210,7 +210,8 @@ contains
                             mesh%faces(ielem,iface)%periodic_type = 'cylindrical'
                         end if
 
-                        mesh%faces(ielem,iface)%chimera_offset_x     = self%bcproperties%compute('offset_x', time, pnt) ! time, pnt and do nothing here, but interface for function requires them.
+                        ! time, pnt do nothing here, but interface for function requires them
+                        mesh%faces(ielem,iface)%chimera_offset_x     = self%bcproperties%compute('offset_x', time, pnt)
                         mesh%faces(ielem,iface)%chimera_offset_y     = self%bcproperties%compute('offset_y', time, pnt)
                         mesh%faces(ielem,iface)%chimera_offset_z     = self%bcproperties%compute('offset_z', time, pnt)
                         mesh%faces(ielem,iface)%chimera_offset_theta = self%bcproperties%compute('offset_theta', time, pnt)

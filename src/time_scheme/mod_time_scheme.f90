@@ -9,12 +9,16 @@ module mod_time_scheme
 
     ! Import solverdata types
     use steady,                         only: steady_t
+    use backward_euler,                 only: backward_euler_t
+    use forward_euler,                  only: forward_euler_t
     implicit none
 
 
 
     ! Instantiate solver types for sourcing
     type(steady_t)                      :: STEADY
+    type(backward_euler_t)              :: BACKWARD_EULER
+    type(forward_euler_t)               :: FORWARD_EULER
 
 
 
@@ -49,6 +53,11 @@ contains
             case ('steady','Steady')
                 allocate(instance, source=STEADY)
 
+            case ('backward euler', 'backward_euler', 'backwardeuler', 'Backward Euler', 'BackwardEuler', 'Backward_Euler')
+                allocate(instance, source=BACKWARD_EULER)
+
+            case ('forward euler', 'forward_euler', 'forwardeuler', 'Forward Euler', 'ForwardEuler', 'Forward_Euler')
+                allocate(instance, source=FORWARD_EULER)
 
             case default
                 user_msg = "We can't seem to find a time integrator that matches the input string. &

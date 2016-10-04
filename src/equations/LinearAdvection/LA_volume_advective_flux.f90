@@ -104,9 +104,9 @@ contains
         !
         ! Compute volume flux at quadrature nodes
         !
-        flux_x = cx  *  u 
-        flux_y = cy  *  u
-        flux_z = cz  *  u
+        flux_x = cx * u 
+        flux_y = cy * u
+        flux_z = cz * u
 
 
         !

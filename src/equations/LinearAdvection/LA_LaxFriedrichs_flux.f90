@@ -101,11 +101,12 @@ contains
         !
         ! Compute boundary upwind flux
         !
-        flux_x = (cx * (u_l - u_r)/TWO )  *  norms(:,1) * unorms(:,1)
-        flux_y = (cy * (u_l - u_r)/TWO )  *  norms(:,2) * unorms(:,2)
-        flux_z = (cz * (u_l - u_r)/TWO )  *  norms(:,3) * unorms(:,3)
+        flux_x = (abs(cx) * (u_l - u_r)/TWO )  *  norms(:,1) * unorms(:,1)
+        flux_y = (abs(cy) * (u_l - u_r)/TWO )  *  norms(:,2) * unorms(:,2)
+        flux_z = (abs(cz) * (u_l - u_r)/TWO )  *  norms(:,3) * unorms(:,3)
 
-        integrand = flux_x + flux_y + flux_z
+
+        integrand = -(flux_x + flux_y + flux_z)
 
 
 

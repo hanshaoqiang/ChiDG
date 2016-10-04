@@ -105,6 +105,7 @@ contains
         flux_y = ((cy*u_l + cy*u_r)/TWO )  *  norms(:,2)
         flux_z = ((cz*u_l + cz*u_r)/TWO )  *  norms(:,3)
 
+
         integrand = flux_x + flux_y + flux_z
 
 

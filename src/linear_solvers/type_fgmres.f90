@@ -164,6 +164,8 @@ contains
             ! Compute initial residual r0, residual norm, and normalized r0
             !
             r0      = self%residual(A,x0,b)
+
+            print*, 'R0 norm: ', r0%norm()
             v(1)    = r0/r0%norm()
             p(1)    = r0%norm()
 

@@ -108,7 +108,7 @@ contains
         a   = self%get_option_value('a')
         b_x = self%get_option_value('b_x')
         b_y = self%get_option_value('b_y')
-        b_x = self%get_option_value('b_z')
+        b_z = self%get_option_value('b_z')
         c   = self%get_option_value('c')
 
 
@@ -120,7 +120,8 @@ contains
         v_z = a * exp( - ((z - b_z)**TWO) / (TWO * c**TWO))
 
 
-        val = v_x * v_y * v_z
+        !val = v_x * v_y * v_z
+        val = v_x
 
     end function compute
     !***********************************************************************************

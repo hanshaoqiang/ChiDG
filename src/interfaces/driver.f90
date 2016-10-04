@@ -39,7 +39,7 @@ program driver
     implicit none
     type(chidg_t)                       :: chidg
     type(dict_t)                        :: toptions, noptions, loptions, poptions
-    class(function_t),  allocatable     :: constant, monopole, blockage
+    class(function_t),  allocatable     :: constant, monopole, blockage, gaussian
 
     integer(ik)                         :: narg
     character(len=1024)                 :: chidg_action, filename, file_a, file_b
@@ -119,8 +119,14 @@ program driver
         ! Initialize solution
         !
         if (solutionfile_in == 'none') then
-            call create_function(constant,'constant')
 
+!            call create_function(gaussian,'gaussian')
+!            call gaussian%set_option('b_x', 0.5_rk)
+!            call gaussian%set_option('c', 0.1_rk)
+!            call chidg%data%sdata%q%project(chidg%data%mesh,gaussian,1)
+
+
+            call create_function(constant,'constant')
 
             ! rho
             call constant%set_option('val',1.20_rk)
